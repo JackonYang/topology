@@ -1,10 +1,14 @@
 .facility_top{
     background-color: #FFFFFF;
-    width: 800pt;
-    height: 800pt;
-    border: 2px solid red;
+    width: 1000px;
+    height: 750px;
+    /*border: 2px solid red;*/
 }
 .edge{
     stroke: rgb(99,99,99);
     stroke-width: 2;
+}
+
+.topology_title{
+    text-align: center;
 }

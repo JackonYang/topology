@@ -25,8 +25,8 @@ var fsTop = {
     links_ovs: [],  // array of [from, to]
     links_host: [], // array of [from, to]
     nodes_pic: {  // width and height of picture
-        pic_height: 80,
-        pic_width: 80,
+        pic_height: 120,
+        pic_width: 120,
     }
 }
 
@@ -61,10 +61,10 @@ function initCircleTemp() {
     fsTop.nodes_pic.path = '../img/';
 }
 
-function init() {
+function init(islandId) {
     "use strict";
     var node = 0, degree = {};
-    var topology_url = 'http://' + window.location.host + "/facility_topology/1/";
+    var topology_url = 'http://' + window.location.host + "/facility_topology/"+islandId+"/";
     $.ajaxSetup({
         async : false
     });
@@ -74,7 +74,7 @@ function init() {
             fsTop.nodes_flowvisor = responseTxt.flowvisor || [];
             fsTop.nodes_ovs = responseTxt.ovs || [];
             fsTop.nodes_host_all = responseTxt.host || [];
-            fsTop.links_fl = responseTxt.linksFl || [];
+            fsTop.links_fl = responseTxt.linkFlowvisor || [];
             fsTop.links_ovs = responseTxt.linkOvs || [];
             fsTop.links_host = responseTxt.linkHost || [];
         } else if (statusTxt === "error") {
@@ -85,9 +85,8 @@ function init() {
         .error(function () {})
         .complete(function () {});
 
-    fsTop.nodes_pic.path = '/static/img/';
+    fsTop.nodes_pic.path = '/static/topology/img/';
     // get degree
-    console.log(fsTop)
 }
 
 // set root. return {rootName: [node set]}
@@ -103,8 +102,10 @@ var getRoot = function (visited) {
 };
 
 var getRootId1 = function (visited) {  // max degree
-    var degrees = getDegrees(fsTop.links_ovs);
-    var maxId = -1, maxDegree = -1;
+    var degrees   = getDegrees(fsTop.links_ovs),
+        maxId     = -1,
+        maxDegree = -1;
+
     for (var i in fsTop.nodes_ovs){
         if (visited.indexOf(fsTop.nodes_ovs[i]) === -1){
             dg = degrees[fsTop.nodes_ovs[i]] || 0;
@@ -117,20 +118,25 @@ var getRootId1 = function (visited) {  // max degree
     return maxId
 };
 
-/*
- * generate flowvisor/ovs/host tree with breadth first search
- * flowvisor is set as root on the same level if exist, and go on searching for ovs and host.
- * if none flowvisor available and there are ovs/host unvisited,
- * ovs with maximum degree is set as root and choose the first one if there is more than one maximum value.
- *
- * results are saved in ovsTree/hostTree/rootSeq.
- * flowvisor is saved in rootSeq if exists.
- */
+// generate flowvisor/ovs/host tree with breadth first search
 var bfs = function(){
-    var ovsTree = {}, hostTree = {}, // rootId: [nodesInLvl0, nodesInLvl1,...]
-        rootSeq = [],  // sequence to plot 
-        visited_ovs = [], visited_host = [], visited_fl = 0,
-        roots = [], father = [], hosts = [];
+    /*
+     * flowvisor is set as root on the same level if exist, and go on searching for ovs and host.
+     * if none flowvisor available and there are ovs/host unvisited,
+     * ovs with maximum degree is set as root and choose the first one if there is more than one maximum value.
+     *
+     * results are saved in ovsTree/hostTree/rootSeq.
+     * flowvisor is saved in rootSeq if exists.
+     */
+    var ovsTree      = {},
+        hostTree     = {}, // rootId: [nodesInLvl0, nodesInLvl1,...]
+        rootSeq      = [],  // sequence to plot 
+        visited_ovs  = [],
+        visited_host = [],
+        visited_fl   = 0,
+        roots        = [],
+        father       = [],
+        hosts        = [];
 
     roots = getRoot(visited_fl);  // dict
     while (roots != -1) { // available tree. empty dict
@@ -161,13 +167,15 @@ var bfs = function(){
 }
 
 // 管理节点的坐标信息
-function axisTree (base_x, base_y, width, delta_y) {
+function axisTree (obj, width, delta_y) {
     "use strict";
-    this.base_x = base_x;
-    this.base_y = base_y;
-    this.width = width;
+    this.base_x = obj.offset().left + fsTop.nodes_pic.pic_width*0.5;
+    this.base_y = obj.offset().top + fsTop.nodes_pic.pic_height*0.5;
+    this.maxWidth = obj.width()
+    this.width = this.maxWidth * width - fsTop.nodes_pic.pic_width;
     this.delta_y = delta_y;
-    this.max_x = base_x;
+    this.max_x = this.base_x;
+    this.max_y = 200;
     this['ovs'] = {};
     this['host'] = {};
     this['flowvisor'] = {};
@@ -175,13 +183,15 @@ function axisTree (base_x, base_y, width, delta_y) {
 axisTree.prototype={
     setOvsLine: function(seqNode, level, seq){
         "use strict";
-        var x = 0, y = 0;
+        var x = 0,
+            y = 0;
         for(var i = 0, len = seqNode.length; i < len; i++){
             x = this.base_x + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base_y + (level + 1) * this.delta_y;
+            y = this.base_y + (level+1) * this.delta_y;
             this['ovs'][seqNode[i]]= [x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
+        this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
     setHostLine: function(seqNode, level, seq){
@@ -193,48 +203,74 @@ axisTree.prototype={
             this['host'][seqNode[i]]=[x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
+        this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
-    setFlowvisorLine: function(seqNode, level, seq){
+    setFlowvisorLine: function(seqNode, seq){
         "use strict";
         var x = 0, y = 0;
         for(var i = 0, len = seqNode.length; i < len; i++){
             x = this.base_x + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base_y + (level + 1) * this.delta_y;
+            y = this.base_y
             this['flowvisor'][seqNode[i]]= [x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
+        this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 }
 
-/*
- * 根据树的结构计算各节点的坐标。
- * 树的结构参数，主要涉及：每层的节点数，相邻两层节点之间的父子关系。
- * 若存在多棵树，在 treeRootSeq 中指定做图的顺序。
- * TODO: 做图顺序动态计算，且不一定为横排放置。参考内存分配算法.
- * 输入：ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
- * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
- */
-function plot(ovsTree, hostTree, treeRootSeq){
-    var fatherSeq = [], ovs_level = [], host_level = [];  // 分层信息
-    var subOvs = {}, subHost = {};  // 层间的父子关系
-    var seq = 0;  // 每层排序后的序列
-    var x_left = 0;  //树的原点横坐标
+function getRelativeWidth(roots, ovsTree, hostTree, n_fv, emptyHost){
+    var nTree = roots.length,
+        max   = [],
+        nLvl  = [];
+    for (var i = 0; i < nTree; i += 1){  // init with root length
+        max[i] = roots[i].length;
+    }
+    max[0] = n_fv > max[0]? n_fv : max[0];
+    max[max.length-1] = emptyHost > max[max.length-1]? emptyHost : max[max.length-1];
+    for (var i = 0; i < max.length; i += 1){
+        for (var j in ovsTree[i]){
+            var len = (ovsTree[i][j]||[]).length + (hostTree[i][j]||[]).length;
+            max[i] = len > max[i]? len : max[i];
+        }
+    }
+    sum = 0;
+    for (var s in max){
+        sum += max[s];
+    }
+    for (var s in max){
+        max[s] = max[s]/sum;
+    }
+    return max
+}
 
-    var treeLayout = new axisTree(x_left, 6, 1020, 130);  // 初始化子画布。
-    treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor, 0, fsTop.nodes_flowvisor);
+// 根据树的结构计算各节点的坐标。
+function plot(obj, ovsTree, hostTree, treeRootSeq){
+    "use strict";
+    /*
+     * 树的结构参数，主要涉及：每层的节点数，相邻两层节点之间的父子关系。
+     * 若存在多棵树，在 treeRootSeq 中指定做图的顺序。
+     * TODO: 做图顺序动态计算，且不一定为横排放置。参考内存分配算法.
+     * 输入：ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
+     * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
+     */
+    var width = 520,  // tmp
+        fatherSeq = [], ovs_level = [], host_level = [],  // 分层信息
+        subOvs = {}, subHost = {}, seq = 0,  // 层间父子关系与排序后的序列
+        treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length, fsTop.hosts_empty.length),
+        treeLayout = new axisTree(obj, treeWidth[0], fsTop.nodes_pic.pic_height);  // 初始化子画布。
 
-    treeLayout.base_y = 76;  // 当前树所在画布的原点坐标
+    treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor, fsTop.nodes_flowvisor);
+
     for (var root in treeRootSeq){// 做图顺序
-        treeLayout.base_x = x_left;  // 当前树所在画布的原点坐标
+        treeLayout.width = treeLayout.maxWidth * treeWidth[root] - fsTop.nodes_pic.pic_width;  // move pointer for next tree
 
         fatherSeq = treeRootSeq[root];  // root is ovs
-        if (root === 0) {
+        if (root === 0) {  // first level, father is flowvisor, sorted need
             subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
-            seq = sort({}, subOvs, fsTop.nodes_flowvisor);
-        } else {
-            seq = fatherSeq;
-        }
+            fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
+        } 
+        seq = fatherSeq;  // no more sort needed
         treeLayout.setOvsLine(fatherSeq, 0, seq);
 
         for (var line = 1; fatherSeq.length > 0; line++){
@@ -243,18 +279,20 @@ function plot(ovsTree, hostTree, treeRootSeq){
             subOvs = father_son(fatherSeq, ovs_level, fsTop.links_ovs);
             subHost = father_son(fatherSeq, host_level, fsTop.links_host);
             seq = sort(subHost, subOvs, fatherSeq);
+
             // 根据排序结果和所在层数，计算横纵坐标
             treeLayout.setOvsLine(ovs_level, line, seq);
             treeLayout.setHostLine(host_level, line, seq);
-            // 基于本轮循环的结果，确定下一轮的父节点序列
-            fatherSeq = sort({}, subOvs, fatherSeq);
+            
+            fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
         }
-
-        x_left = treeLayout.max_x;
+        treeLayout.base_x = treeLayout.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
+        console.log(treeLayout.base_x)
     }
 
-    treeLayout.base_x = x_left;  // 当前树所在画布的原点坐标
-    treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);
+    treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
+
+    obj.css("height",treeLayout.max_y + fsTop.nodes_pic.pic_height);
     return treeLayout;
 }
 
@@ -277,7 +315,6 @@ function drawLine(axis_ovs, axis_host, axis_flowvisor){  // unify in one array
 }
 
 // generate html code according to coordinate of nodes and lines.
-// TODO: refactor with MVC model. pic width and height controlled in css
 var Display = function(container){
     this.obj = $(container);
     this.html = "";
@@ -293,7 +330,13 @@ Display.prototype = {
     },
 
     add_edge: function(coordinate, edgeType){
-        this.html += "<g><line class="+edgeType+" x1='"+coordinate[0]+"' y1='"+coordinate[1]+"'x2='"+coordinate[2]+"' y2='"+coordinate[3]+"'></line></g> ";
+        var edge = document.createElement("line");
+        edge.setAttribute('class', edgeType);
+        edge.setAttribute('x1', coordinate[0]);
+        edge.setAttribute('y1', coordinate[1]);
+        edge.setAttribute('x2', coordinate[2]);
+        edge.setAttribute('y2', coordinate[3]);
+        this.html += edge.outerHTML;
     },
 
     // coordinates = {nodeType: {nodeId:[x,y]}}
@@ -312,8 +355,8 @@ Display.prototype = {
         }
     },
 
-    show: function() {
-        //$("div#content").empty();
+    show: function(height) {
+        this.obj.empty();
         this.obj.append(this.start + this.html + this.end);
     }
 }
@@ -327,7 +370,7 @@ function draw (origObj) {
     var treeRootSeq = trees['treeSeq']
 
     // calculate coordinate according to tree info
-    var axis_nodes = plot(ovsTree, hostTree, treeRootSeq);
+    var axis_nodes = plot($(origObj), ovsTree, hostTree, treeRootSeq);
     var axis_links = drawLine(axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
 
     // generate html according to coordinate
@@ -339,8 +382,9 @@ function draw (origObj) {
 
 // 程序入口
 $(document).ready(function() {
-    //init();  // get data from host
-    initCircleTemp();  // test data
+    /(\d+)/g.test(window.location.pathname);
+    init(RegExp.$1);  // get data from host
+    //initCircleTemp();  // test data
 
     degree = getDegrees(fsTop.links_host);
     for (var i in fsTop.nodes_host_all){
