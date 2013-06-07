@@ -28,13 +28,3 @@ test('bfs()', function () {
 });
 
 
-test('Display()', function () {
-    "use strict";
-    var coordiantesNodes = {'ovs': {'11': [100, 200]}, 'host': {'12': [150, 300]}, 'flowvisor': {'13': [100, 400]}},
-        coordiantesEdges = {'edge': {'51': [100, 200, 150, 300], '52': [150, 300, 100, 400]}},
-        testContent = new Display("div#test");
-    testContent.add_vertexs(coordiantesNodes);
-    testContent.add_edges('edge', coordiantesEdges.edge);
-    testContent.show();
-    ok(true);
-});

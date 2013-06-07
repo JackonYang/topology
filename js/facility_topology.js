@@ -316,17 +316,12 @@ function drawLine(axis_ovs, axis_host, axis_flowvisor){  // unify in one array
 }
 
 // generate html code according to coordinate of nodes and lines.
-var Display = function(container){
-    this.obj = $(container);
-    this.resObj = $("<svg></svg>");
-    this.html = "";
-    this.start = "<svg>";
-    this.end = "</svg>";
+var display = function(container, vertex, edge){
+    $(container).append("<svg>"+add_vertexs(vertex)+add_edges('edge',edge)+"</svg>");
 }
 
-Display.prototype = {
-    // coordinates = {nodeType: {nodeId:[x,y]}}
-    add_vertexs: function(coordinates){
+// coordinates = {nodeType: {nodeId:[x,y]}}
+var add_vertexs = function(coordinates){
         "use strict";
         // only fsTop.PIC_PATH, fsTop.nodes_pic.width/heght is used
         var coordinate, x, y,
@@ -341,23 +336,17 @@ Display.prototype = {
         }
         }
         return html;
-    },
+    }
 
-    // coordinates = {edgeId:[x1,y1,x2,y2]}
-    add_edges: function(edgeType, coordinates) {
+// coordinates = {edgeId:[x1,y1,x2,y2]}
+var add_edges = function(edgeType, coordinates) {
         var coordinate, edgeId, html;
         for (var edgeId in coordinates){
             coordinate = coordinates[edgeId]
             html += "<line class='"+edgeType+"' x1='"+coordinate[0]+"' y1='"+coordinate[1]+"' x2='"+coordinate[2]+"' y2='"+coordinate[3]+"'></line>";
         }
         return html;
-    },
-
-    show: function(height) {
-        //this.obj.empty();
-        this.obj.append(this.start + this.html + this.end);
     }
-}
 
 // 主流程
 function draw (origObj) {
@@ -372,10 +361,7 @@ function draw (origObj) {
     var axis_links = drawLine(axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
 
     // generate html according to coordinate
-    var content = new Display(origObj);
-    content.html += content.add_vertexs(axis_nodes);
-    content.html += content.add_edges('edge', axis_links);
-    content.show()
+    display(origObj, axis_nodes, axis_links);
 }
 
 // 程序入口
