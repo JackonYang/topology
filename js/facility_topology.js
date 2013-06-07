@@ -27,7 +27,8 @@ var fsTop = {
     nodes_pic: {  // width and height of picture
         pic_height: 120,
         pic_width: 120,
-    }
+    },
+    PIC_PATH: ''
 }
 
 // init data
@@ -58,7 +59,7 @@ function initCircleTemp() {
         ["HOST12", "00:14"], ["HOST13", "00:16"], ["HOSTM1", "00:01"],
         ["HOSTM2", "00:05"], ["HOSTM1", "00:03"], ["HOSTM1", "00:09"],
         ["HOSTM2", "00:11"], ["HOSTM2", "00:08"], ["HOSTM2", "00:13"]];
-    fsTop.nodes_pic.path = '../img/';
+    fsTop.PIC_PATH = '../img/';
 }
 
 function init(islandId) {
@@ -85,7 +86,7 @@ function init(islandId) {
         .error(function () {})
         .complete(function () {});
 
-    fsTop.nodes_pic.path = '/static/topology/img/';
+    fsTop.PIC_PATH = '/static/topology/img/';
     // get degree
 }
 
@@ -287,7 +288,7 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
             fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
         }
         treeLayout.base_x = treeLayout.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
-        console.log(treeLayout.base_x)
+        //console.log(treeLayout.base_x)
     }
 
     treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
@@ -317,18 +318,12 @@ function drawLine(axis_ovs, axis_host, axis_flowvisor){  // unify in one array
 // generate html code according to coordinate of nodes and lines.
 var Display = function(container){
     this.obj = $(container);
+    this.resObj = $("<svg></svg>");
     this.html = "";
-    this.topology = document.createElement("svg");
     this.start = "<svg>";
     this.end = "</svg>";
 }
 Display.prototype = {
-    add_vertex: function(coordinate, nodeType, nodeId){
-        x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5
-        y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5
-        this.html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+fsTop.nodes_pic.path+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
-    },
-
     add_edge: function(coordinate, edgeType){
         var edge = document.createElement("line");
         edge.setAttribute('class', edgeType);
@@ -336,14 +331,21 @@ Display.prototype = {
         edge.setAttribute('y1', coordinate[1]);
         edge.setAttribute('x2', coordinate[2]);
         edge.setAttribute('y2', coordinate[3]);
+        this.resObj.append(edge)
         this.html += edge.outerHTML;
     },
 
     // coordinates = {nodeType: {nodeId:[x,y]}}
     add_vertexs: function(coordinates){
-        for (var nodeType in coordinates){
-        for (var name in coordinates[nodeType]){
-            this.add_vertex(coordinates[nodeType][name], nodeType, name);
+        "use strict";
+        var coordinate, x, y,
+            nodeId, nodeType;
+        for (nodeType in coordinates){
+        for (nodeId in coordinates[nodeType]){
+            coordinate = coordinates[nodeType][nodeId];
+            x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5
+            y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5
+            this.html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+fsTop.PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
         }
         }
     },
@@ -356,7 +358,7 @@ Display.prototype = {
     },
 
     show: function(height) {
-        this.obj.empty();
+        //this.obj.empty();
         this.obj.append(this.start + this.html + this.end);
     }
 }
@@ -383,8 +385,8 @@ function draw (origObj) {
 // 程序入口
 $(document).ready(function() {
     /(\d+)/g.test(window.location.pathname);
-    init(RegExp.$1);  // get data from host
-    //initCircleTemp();  // test data
+    //init(RegExp.$1);  // get data from host
+    initCircleTemp();  // test data
 
     degree = getDegrees(fsTop.links_host);
     for (var i in fsTop.nodes_host_all){
