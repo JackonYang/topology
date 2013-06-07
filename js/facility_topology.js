@@ -323,30 +323,20 @@ var Display = function(container){
     this.start = "<svg>";
     this.end = "</svg>";
 }
-Display.prototype = {
-    add_edge: function(coordinate, edgeType){
-        var edge = document.createElement("line");
-        edge.setAttribute('class', edgeType);
-        edge.setAttribute('x1', coordinate[0]);
-        edge.setAttribute('y1', coordinate[1]);
-        edge.setAttribute('x2', coordinate[2]);
-        edge.setAttribute('y2', coordinate[3]);
-        this.resObj.append(edge)
-        this.html += edge.outerHTML;
-    },
 
+Display.prototype = {
     // coordinates = {nodeType: {nodeId:[x,y]}}
     add_vertexs: function(coordinates){
         "use strict";
-        console.log(coordinates)
+        // only fsTop.PIC_PATH, fsTop.nodes_pic.width/heght is used
         var coordinate, x, y,
             nodeId, nodeType,
             html;
         for (nodeType in coordinates){
         for (nodeId in coordinates[nodeType]){
             coordinate = coordinates[nodeType][nodeId];
-            x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5
-            y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5
+            x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5;
+            y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5;
             html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+fsTop.PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
         }
         }
@@ -355,9 +345,12 @@ Display.prototype = {
 
     // coordinates = {edgeId:[x1,y1,x2,y2]}
     add_edges: function(edgeType, coordinates) {
-        for (var name in coordinates){
-            this.add_edge(coordinates[name], edgeType);
+        var coordinate, edgeId, html;
+        for (var edgeId in coordinates){
+            coordinate = coordinates[edgeId]
+            html += "<line class='"+edgeType+"' x1='"+coordinate[0]+"' y1='"+coordinate[1]+"' x2='"+coordinate[2]+"' y2='"+coordinate[3]+"'></line>";
         }
+        return html;
     },
 
     show: function(height) {
@@ -381,7 +374,7 @@ function draw (origObj) {
     // generate html according to coordinate
     var content = new Display(origObj);
     content.html += content.add_vertexs(axis_nodes);
-    content.add_edges('edge', axis_links);
+    content.html += content.add_edges('edge', axis_links);
     content.show()
 }
 
