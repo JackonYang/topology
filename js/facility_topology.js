@@ -220,27 +220,29 @@ axisTree.prototype={
     },
 }
 
-function getRelativeWidth(roots, ovsTree, hostTree, n_fv, emptyHost){
+function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
     var nTree = roots.length,
         max   = [],
-        nLvl  = [];
-    for (var i = 0; i < nTree; i += 1){  // init with root length
-        max[i] = roots[i].length;
+        nLvl  = [],
+        lenLvl, root, lvl;
+
+    for (root = 0; root < nTree; root += 1){  // init by length root
+        max[root] = roots[root].length;
     }
     max[0] = n_fv > max[0]? n_fv : max[0];
-    max[max.length-1] = emptyHost > max[max.length-1]? emptyHost : max[max.length-1];
-    for (var i = 0; i < max.length; i += 1){
-        for (var j in ovsTree[i]){
-            var len = (ovsTree[i][j]||[]).length + (hostTree[i][j]||[]).length;
-            max[i] = len > max[i]? len : max[i];
+
+    for (root = 0; root < nTree; root += 1){
+        for (var j = 0; j < ovsTree[root].length + 1; j += 1){
+            lenLvl = (ovsTree[root][j]||[]).length + (hostTree[root][j]||[]).length;
+            max[root] = lenLvl > max[root]? lenLvl : max[root];
         }
     }
     sum = 0;
-    for (var s in max){
-        sum += max[s];
+    for (root = 0; root < nTree; root +=1){
+        sum += max[root];
     }
-    for (var s in max){
-        max[s] = max[s]/sum;
+    for (root = 0; root < nTree; root +=1){
+        max[root] = max[root]/sum;
     }
     return max
 }
@@ -255,8 +257,7 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
      * 输入：ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
      * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
      */
-    var width = 520,  // tmp
-        fatherSeq = [], ovs_level = [], host_level = [],  // 分层信息
+    var fatherSeq = [], ovs_level = [], host_level = [],  // 分层信息
         subOvs = {}, subHost = {}, seq = 0,  // 层间父子关系与排序后的序列
         treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length, fsTop.hosts_empty.length),
         treeLayout = new axisTree(obj, treeWidth[0], fsTop.nodes_pic.pic_height);  // 初始化子画布。
