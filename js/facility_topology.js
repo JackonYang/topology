@@ -207,9 +207,10 @@ axisTree.prototype={
         this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
-    setFlowvisorLine: function(seqNode, seq){
+    setFlowvisorLine: function(seqNode){
         "use strict";
-        var x = 0, y = 0;
+        var x = 0, y = 0,
+            seq = seqNode;
         for(var i = 0, len = seqNode.length; i < len; i++){
             x = this.base_x + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
             y = this.base_y
@@ -218,6 +219,15 @@ axisTree.prototype={
         this.max_x = (this.max_x > x) ? this.max_x : x;
         this.max_y = (this.max_y > y) ? this.max_y : y;
     },
+
+    setWidth: function (treeWidth) {
+        "use strict";
+        this.width = this.maxWidth * treeWidth - fsTop.nodes_pic.pic_width;
+    },
+
+    nextTree: function (){
+        this.base_x = this.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
+    }
 }
 
 function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
@@ -257,15 +267,15 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
      * 输入：ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
      * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
      */
-    var fatherSeq = [], ovs_level = [], host_level = [],  // 分层信息
-        subOvs = {}, subHost = {}, seq = 0,  // 层间父子关系与排序后的序列
-        treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length, fsTop.hosts_empty.length),
-        treeLayout = new axisTree(obj, treeWidth[0], fsTop.nodes_pic.pic_height);  // 初始化子画布。
+    var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
+        treeLayout = new axisTree(obj, treeWidth[0], fsTop.nodes_pic.pic_height),  // 初始化子画布。
+        fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
+        subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
 
-    treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor, fsTop.nodes_flowvisor);
+    treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
 
     for (var root in treeRootSeq){// 做图顺序
-        treeLayout.width = treeLayout.maxWidth * treeWidth[root] - fsTop.nodes_pic.pic_width;  // move pointer for next tree
+        treeLayout.setWidth(treeWidth[root]);
 
         fatherSeq = treeRootSeq[root];  // root is ovs
         if (root === 0) {  // first level, father is flowvisor, sorted need
@@ -275,9 +285,10 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
         seq = fatherSeq;  // no more sort needed
         treeLayout.setOvsLine(fatherSeq, 0, seq);
 
-        for (var line = 1; fatherSeq.length > 0; line++){
+        levels = ovsTree[root].length + 1;
+        for (var line = 1; line < levels; line += 1){
             host_level = (hostTree[root] && hostTree[root][line-1]) || [];
-            ovs_level = ovsTree[root][line] || [];
+            ovs_level = (ovsTree[root] && ovsTree[root][line]) || [];
             subOvs = father_son(fatherSeq, ovs_level, fsTop.links_ovs);
             subHost = father_son(fatherSeq, host_level, fsTop.links_host);
             seq = sort(subHost, subOvs, fatherSeq);
@@ -288,8 +299,7 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
             
             fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
         }
-        treeLayout.base_x = treeLayout.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
-        //console.log(treeLayout.base_x)
+        treeLayout.nextTree();
     }
 
     treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
