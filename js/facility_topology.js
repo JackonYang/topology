@@ -168,15 +168,21 @@ var bfs = function(){
 }
 
 // 管理节点的坐标信息
-function axisTree (obj, width, delta_y) {
+function axisTree (width, base, maxWidth, delta_y) {
     "use strict";
-    this.base_x = obj.offset().left + fsTop.nodes_pic.pic_width*0.5;
-    this.base_y = obj.offset().top + fsTop.nodes_pic.pic_height*0.5;
-    this.maxWidth = obj.width()
+    /*
+     * 参考点base(x, y), 最大max(x, y), 树宽，高度浮动.
+     */
+    this.base = [base.left + fsTop.nodes_pic.pic_width*0.5,
+                 base.top + delta_y*0.5];
+    this.maxWidth = maxWidth;
+
     this.width = this.maxWidth * width - fsTop.nodes_pic.pic_width;
     this.delta_y = delta_y;
-    this.max_x = this.base_x;
+
+    this.max_x = this.base[0];
     this.max_y = 200;
+
     this['ovs'] = {};
     this['host'] = {};
     this['flowvisor'] = {};
@@ -187,8 +193,8 @@ axisTree.prototype={
         var x = 0,
             y = 0;
         for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base_x + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base_y + (level+1) * this.delta_y;
+            x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
+            y = this.base[1] + (level+1) * this.delta_y;
             this['ovs'][seqNode[i]]= [x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
@@ -199,8 +205,8 @@ axisTree.prototype={
         "use strict";
         var x = 0, y = 0;
         for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base_x + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base_y + (level + 0.6) * this.delta_y;
+            x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
+            y = this.base[1] + (level + 0.6) * this.delta_y;
             this['host'][seqNode[i]]=[x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
@@ -212,8 +218,8 @@ axisTree.prototype={
         var x = 0, y = 0,
             seq = seqNode;
         for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base_x + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base_y
+            x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
+            y = this.base[1]
             this['flowvisor'][seqNode[i]]= [x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
@@ -226,7 +232,7 @@ axisTree.prototype={
     },
 
     nextTree: function (){
-        this.base_x = this.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
+        this.base[0] = this.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
     }
 }
 
@@ -268,7 +274,7 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
      * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
      */
     var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
-        treeLayout = new axisTree(obj, treeWidth[0], fsTop.nodes_pic.pic_height),  // 初始化子画布。
+        treeLayout = new axisTree(treeWidth[0], obj.offset(), obj.width(), fsTop.nodes_pic.pic_height),  // 初始化子画布。
         fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
         subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
 
@@ -336,8 +342,10 @@ var display = function(container, vertex, edge){
 var add_vertexs = function(coordinates){
     "use strict";
     // only fsTop.PIC_PATH, fsTop.nodes_pic.width/heght is used
-    var coordinate, x, y, nodeId, nodeType, html;
-    for (nodeType in coordinates){
+    var nodes = ['flowvisor', 'host', 'ovs'],
+        coordinate, x, y, nodeId, nodeType, html;
+    for (var i = 0; i < nodes.length; i += 1){
+        nodeType = nodes[i];
         for (nodeId in coordinates[nodeType]){
             coordinate = coordinates[nodeType][nodeId];
             x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5;
@@ -374,13 +382,17 @@ function draw (origObj) {
     // generate html according to coordinate
     display(origObj, axis_nodes, axis_links);
 }
+var start = function() {
+    // request data
+    isTest = !(/(\d+)/g.test(location.pathname));
+    if (isTest) {
+        alert('test mode, press to go on')
+        initCircleTemp();  // test data
+    } else {
+        init(RegExp.$1);  // get data from host
+    }
 
-// 程序入口
-$(document).ready(function() {
-    /(\d+)/g.test(window.location.pathname);
-    //init(RegExp.$1);  // get data from host
-    initCircleTemp();  // test data
-
+    // init host info
     degree = getDegrees(fsTop.links_host);
     for (var i in fsTop.nodes_host_all){
         node = fsTop.nodes_host_all[i];
@@ -391,7 +403,10 @@ $(document).ready(function() {
         }
     }
     fsTop.nodes_host = fsTop.nodes_host.concat(fsTop.hosts_empty);
-
     fsTop.links_ovs = doubleLinks(fsTop.links_ovs)
+
+    // div info
     draw("div#facility_content");
-});
+};
+// 程序入口
+$(document).ready(start);
