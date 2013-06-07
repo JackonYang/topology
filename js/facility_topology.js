@@ -338,16 +338,19 @@ Display.prototype = {
     // coordinates = {nodeType: {nodeId:[x,y]}}
     add_vertexs: function(coordinates){
         "use strict";
+        console.log(coordinates)
         var coordinate, x, y,
-            nodeId, nodeType;
+            nodeId, nodeType,
+            html;
         for (nodeType in coordinates){
         for (nodeId in coordinates[nodeType]){
             coordinate = coordinates[nodeType][nodeId];
             x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5
             y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5
-            this.html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+fsTop.PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
+            html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+fsTop.PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
         }
         }
+        return html;
     },
 
     // coordinates = {edgeId:[x1,y1,x2,y2]}
@@ -377,7 +380,7 @@ function draw (origObj) {
 
     // generate html according to coordinate
     var content = new Display(origObj);
-    content.add_vertexs(axis_nodes);
+    content.html += content.add_vertexs(axis_nodes);
     content.add_edges('edge', axis_links);
     content.show()
 }
