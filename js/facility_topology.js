@@ -45,7 +45,6 @@ function initCircleTemp() {
                     "HOST09", "HOST10", "HOST11", "HOST12", "HOST13", "HOST_EMPTY12", "HOST_EMPTY13"];
     // links 
     fsTop.links_fl = [['00:01', "FL01"], ['00:02', "FL02"], ['00:13', "FL03"]];
-    //fsTop.links_fl = [['FL01', '00:01'], ['FL02', '00:02'], ['FL03', '00:13']];
     fsTop.links_ovs = [["00:01", "00:03"], ["00:02", "00:03"], ["00:04", "00:06"],
                  ["00:05", "00:06"], ["00:03", "00:06"], ["00:03", "00:07"],
                  ["00:06", "00:08"], ["00:08", "00:09"], ["00:08", "00:10"],
@@ -384,11 +383,10 @@ function draw (origObj) {
 }
 var start = function() {
     // request data
-    isTest = !(/(\d+)/g.test(location.pathname));
-    if (isTest) {
-        alert('test mode, press to go on')
+    if (location.protocol === 'file:') {
         initCircleTemp();  // test data
     } else {
+        /(\d+)/g.test(location.pathname);
         init(RegExp.$1);  // get data from host
     }
 
