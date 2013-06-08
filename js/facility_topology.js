@@ -66,10 +66,10 @@ function init(islandId) {
     var node = 0, degree = {};
     var topology_url = 'http://' + window.location.host + "/facility_topology/"+islandId+"/";
     $.ajaxSetup({
-        async : false
+        async : false  // 必须同步，后来的计算依赖与数据
     });
-    $.get(topology_url, function(responseTxt,statusTxt,xhr) {
-        if (statusTxt === "success") {
+    $.get(topology_url, function success (responseTxt,statusTxt, xhr) {
+        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
             responseTxt = strToJson(responseTxt);
             fsTop.nodes_flowvisor = responseTxt.flowvisor || [];
             fsTop.nodes_ovs = responseTxt.ovs || [];
@@ -77,16 +77,13 @@ function init(islandId) {
             fsTop.links_fl = responseTxt.linkFlowvisor || [];
             fsTop.links_ovs = responseTxt.linkOvs || [];
             fsTop.links_host = responseTxt.linkHost || [];
-        } else if (statusTxt === "error") {
-            alert("Error ovs: "+xhr.status+": "+xhr.statusText);
+        } else {
+            console.log('response text error');
+            console.log(xhr);
         }
     })
-        .success(function () {})
-        .error(function () {})
-        .complete(function () {});
-
+        .error(function () {console.log('data error')})  // url error, 404
     fsTop.PIC_PATH = '/static/topology/img/';
-    // get degree
 }
 
 // set root. return {rootName: [node set]}
@@ -381,7 +378,9 @@ function draw (origObj) {
     // generate html according to coordinate
     display(origObj, axis_nodes, axis_links);
 }
-var start = function() {
+
+// 程序入口
+$(document).ready(function () {
     // request data
     if (location.protocol === 'file:') {
         initCircleTemp();  // test data
@@ -405,6 +404,4 @@ var start = function() {
 
     // div info
     draw("div#facility_content");
-};
-// 程序入口
-$(document).ready(start);
+});
