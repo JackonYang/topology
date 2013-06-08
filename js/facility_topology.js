@@ -170,7 +170,7 @@ var bfs = function(){
 }
 
 // 管理节点的坐标信息
-function axisTree (width, base, maxWidth, delta_y) {
+function axisTree (base, maxWidth, delta_y) {
     "use strict";
     /*
      * 参考点base(x, y), 最大max(x, y), 树宽，高度浮动.
@@ -179,7 +179,7 @@ function axisTree (width, base, maxWidth, delta_y) {
                  base.top + delta_y*0.5];
     this.maxWidth = maxWidth;
 
-    this.width = this.maxWidth * width - fsTop.nodes_pic.pic_width;
+    this.width = 0;
     this.delta_y = delta_y;
 
     this.max_x = this.base[0];
@@ -221,7 +221,7 @@ axisTree.prototype={
             seq = seqNode;
         for(var i = 0, len = seqNode.length; i < len; i++){
             x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base[1]
+            y = this.base[1];
             this['flowvisor'][seqNode[i]]= [x, y];
         }
         this.max_x = (this.max_x > x) ? this.max_x : x;
@@ -267,7 +267,7 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
 }
 
 // 根据树的结构计算各节点的坐标。
-function plot(obj, ovsTree, hostTree, treeRootSeq){
+function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
     "use strict";
     /*
      * 树的结构参数，主要涉及：每层的节点数，相邻两层节点之间的父子关系。
@@ -277,17 +277,15 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
      * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
      */
     var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
-        treeLayout = new axisTree(treeWidth[0], obj.offset(), obj.width(), fsTop.nodes_pic.pic_height),  // 初始化子画布。
         fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
         subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
-
-    treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
 
     for (var root in treeRootSeq){// 做图顺序
         treeLayout.setWidth(treeWidth[root]);
 
         fatherSeq = treeRootSeq[root];  // root is ovs
-        if (root === 0) {  // first level, father is flowvisor, sorted need
+        if (root === '0') {  // first level, father is flowvisor, sorted need
+            treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
             subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
             fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
         } 
@@ -313,7 +311,7 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
 
     treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
 
-    obj.css("height",treeLayout.max_y + fsTop.nodes_pic.pic_height);
+    //obj.css("height",treeLayout.max_y + fsTop.nodes_pic.pic_height);
     return treeLayout;
 }
 
@@ -335,7 +333,7 @@ function drawLine(nodes, links) {
 // generate html code according to coordinate of nodes and lines.
 var display = function(container, vertex, edge, PIC_PATH){
     "use strict";
-    $(container).append("<svg>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
+    container.append("<svg>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
 }
 
 // coordinates = {nodeType: {nodeId:[x,y]}}
@@ -368,24 +366,24 @@ var add_edges = function(edgeType, coordinates) {
 }
 
 // 主流程
-function draw (origObj, PIC_PATH) {
+function draw (obj, PIC_PATH) {
 
     var trees = bfs(),
         hostTree = trees['host'],
         ovsTree = trees['ovs'],
         treeRootSeq = trees['treeSeq'],
         links = [],
-        nodes = {};
-
+        nodes = {},
+        treeLayout = new axisTree(obj.offset(), obj.width(), fsTop.nodes_pic.pic_height),  // 初始化子画布。
+        axis_nodes = plot(treeLayout, treeRootSeq, ovsTree, hostTree);
     // calculate coordinate according to tree info
-    var axis_nodes = plot($(origObj), ovsTree, hostTree, treeRootSeq);
 
     links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
     $.extend(nodes, axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
-    var axis_links = drawLine(nodes, links)
+    var axis_links = drawLine(nodes, links);
 
     // generate html according to coordinate
-    display(origObj, axis_nodes, axis_links, PIC_PATH);
+    display(obj, axis_nodes, axis_links, PIC_PATH);
 }
 
 // 程序入口
@@ -415,5 +413,5 @@ $(document).ready(function () {
     fsTop.links_ovs = doubleLinks(fsTop.links_ovs)
 
     // div info
-    draw("div#facility_content", PIC_PATH);
+    draw($("div#facility_content"), PIC_PATH);
 });
