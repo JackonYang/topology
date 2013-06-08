@@ -118,7 +118,8 @@ var getRootId1 = function (visited) {  // max degree
 };
 
 // generate flowvisor/ovs/host tree with breadth first search
-var bfs = function(){
+var bfs = function () {
+    "use strict";
     /*
      * All flowvisor are set as root on the same level if exist, Ovs and host come after flowvisor
      * if none flowvisor available and there are ovs/host unvisited,
@@ -132,6 +133,7 @@ var bfs = function(){
         visited_host = [],
         roots        = [],
         father       = [],
+        rootIdx      = -1,
         hosts        = [];
 
     roots = getRootIds(visited_ovs);  // dict
@@ -144,7 +146,7 @@ var bfs = function(){
         ovsTree[rootIdx] = [];
         hostTree[rootIdx] = [];
         // 遍历节点
-        while(father) {
+        while (father) {
             ovsTree[rootIdx].push(father);  // insert ovs into tree
             visited_ovs = visited_ovs.concat(father);
             hosts = getConnected(father, fsTop.links_host, visited_host) || [];
@@ -164,8 +166,9 @@ var bfs = function(){
     rootSeq.push(roots);
     rootIdx = rootSeq.indexOf(roots);
     ovsTree[rootIdx] = [];
-    hostTree[rootIdx] = minus(fsTop.nodes_host_all, visited_host);
+    hostTree[rootIdx] = [minus(fsTop.nodes_host_all, visited_host)];
 
+    console.log({'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq});
     return {'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq};
 }
 
@@ -255,6 +258,7 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
             max[root] = lenLvl > max[root]? lenLvl : max[root];
         }
     }
+    console.log(max);
     sum = 0;
     for (root = 0; root < nTree; root +=1){
         sum += max[root];
