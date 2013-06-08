@@ -13,12 +13,18 @@ var doubleLinks = function (link) {
 var unique = function (orig) {
     "use strict";
     var a = [];
-    orig.forEach(function(item, idx, array){
+    orig.forEach(function(item){
         if (-1 === a.indexOf(item)){
             a.push(item);
         }
     });
     return a;
+};
+
+var minus = function (a, b){
+    return unique(a).filter(function(item){
+            return (a.indexOf(item) > -1) && (-1 === b.indexOf(item));
+        });
 };
 
 var strToJson = function (str) {

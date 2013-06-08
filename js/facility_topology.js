@@ -30,7 +30,6 @@ var fsTop = {
     }
 }
 
-
 // init data
 function initCircleTemp() {
     "use strict";
@@ -165,9 +164,7 @@ var bfs = function(){
     rootSeq.push(roots);
     rootIdx = rootSeq.indexOf(roots);
     ovsTree[rootIdx] = [];
-    hostTree[rootIdx] = [fsTop.hosts_empty];
-
-    console.log({'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq});
+    hostTree[rootIdx] = minus(fsTop.nodes_host_all, visited_host);
 
     return {'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq};
 }

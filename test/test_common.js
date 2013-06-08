@@ -5,7 +5,7 @@ test('getConnected()', function() {
     deepEqual(getConnected(small, line, big),
         [5], '多父节点，选未搜索过的子节点')
     deepEqual(getConnected([1], line, small), [2, 5], '单父节点返回子节点')
-    deepEqual(getConnected([], line, big), [], '无父节点返回空')
+    deepEqual(getConnected([], line, big), undefined, '无父节点返回空')
 });
 
 // 不支持数组
@@ -25,5 +25,15 @@ test('getDegrees()', function() {
     edges = [[1, 2], [1, 3], [4, 5], [1, 5]];
     res = {1: 3, 2: 1, 3: 1, 4: 1, 5: 2};
     deepEqual(getDegrees(edges), res, 'get degree')
+
+});
+
+test('minus()', function() {
+    "use strict";
+    var a = [1, 2, 3, 4],
+        b = [1, 3, 5],
+        res = [2, 4];
+
+    deepEqual(minus(a, b), res, 'minus');
 
 });
