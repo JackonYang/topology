@@ -93,23 +93,20 @@ function init(islandId) {
 }
 
 // set root. return {rootName: [node set]}
-var getRoot = function (visited) {
+var getRootIds = function (visited) {
     "use strict";
-    if (visited === 0) {
-        if (fsTop.nodes_flowvisor.length > 0) {
-            return getConnected(fsTop.nodes_flowvisor, fsTop.links_fl, []);
-        }
-        visited = [];
-    }
-    return getRootId1(visited);
+    return getConnected(fsTop.nodes_flowvisor, fsTop.links_fl, visited) || getRootId1(visited);
 };
 
 var getRootId1 = function (visited) {  // max degree
+    "use strict";
     var degrees   = getDegrees(fsTop.links_ovs),
-        maxId     = -1,
-        maxDegree = -1;
+        maxDegree = -1,
+        maxId,
+        i,
+        dg;
 
-    for (var i in fsTop.nodes_ovs){
+    for (i in fsTop.nodes_ovs){
         if (visited.indexOf(fsTop.nodes_ovs[i]) === -1){
             dg = degrees[fsTop.nodes_ovs[i]] || 0;
             if (dg > maxDegree) {
@@ -124,40 +121,44 @@ var getRootId1 = function (visited) {  // max degree
 // generate flowvisor/ovs/host tree with breadth first search
 var bfs = function(){
     /*
-     * flowvisor is set as root on the same level if exist, and go on searching for ovs and host.
+     * All flowvisor are set as root on the same level if exist, Ovs and host come after flowvisor
      * if none flowvisor available and there are ovs/host unvisited,
      * ovs with maximum degree is set as root and choose the first one if there is more than one maximum value.
-     *
      * results are saved in ovsTree/hostTree/rootSeq.
-     * flowvisor is saved in rootSeq if exists.
      */
     var ovsTree      = {},
         hostTree     = {}, // rootId: [nodesInLvl0, nodesInLvl1,...]
         rootSeq      = [],  // sequence to plot 
         visited_ovs  = [],
         visited_host = [],
-        visited_fl   = 0,
         roots        = [],
         father       = [],
         hosts        = [];
 
-    roots = getRoot(visited_fl);  // dict
-    while (roots != -1) { // available tree. empty dict
+    roots = getRootIds(visited_ovs);  // dict
+    while (roots) { // available tree. empty dict
         rootSeq.push(roots);
         rootIdx = rootSeq.indexOf(roots);
 
-        father = roots, ovsTree[rootIdx] = [], hostTree[rootIdx] = [];
-        while(father.length > 0) {
+        // 初始化树
+        father = roots;
+        ovsTree[rootIdx] = [];
+        hostTree[rootIdx] = [];
+        // 遍历节点
+        while(father) {
             ovsTree[rootIdx].push(father);  // insert ovs into tree
             visited_ovs = visited_ovs.concat(father);
-            hosts = getConnected(father, fsTop.links_host, visited_host);
+            hosts = getConnected(father, fsTop.links_host, visited_host) || [];
             hostTree[rootIdx].push(hosts);  // insert host into tree
             visited_host = visited_host.concat(hosts);
 
             father = getConnected(father, fsTop.links_ovs, visited_ovs);
         }
-        roots = getRoot(visited_ovs);  // next tree
+
+        roots = getRootIds(visited_ovs);  // next tree
     }
+
+    // 没有访问过的 host 是 empty host
 
     // add empty host to the tree
     roots = [];
@@ -165,6 +166,8 @@ var bfs = function(){
     rootIdx = rootSeq.indexOf(roots);
     ovsTree[rootIdx] = [];
     hostTree[rootIdx] = [fsTop.hosts_empty];
+
+    console.log({'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq});
 
     return {'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq};
 }
@@ -255,7 +258,6 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
             max[root] = lenLvl > max[root]? lenLvl : max[root];
         }
     }
-    console.log(max)
     sum = 0;
     for (root = 0; root < nTree; root +=1){
         sum += max[root];
@@ -270,11 +272,10 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
 function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
     "use strict";
     /*
-     * 树的结构参数，主要涉及：每层的节点数，相邻两层节点之间的父子关系。
-     * 若存在多棵树，在 treeRootSeq 中指定做图的顺序。
+     * 根据 treeRootSeq 中确定的顺序，遍历每一棵树并计算每一层各节点的坐标。
+     * 计算每一层坐标时，根据父节点的位置确定层内的位置，从而避免交叠线。
      * TODO: 做图顺序动态计算，且不一定为横排放置。参考内存分配算法.
      * 输入：ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
-     * 输出：treeLayout = {axis_ovs: {...}, aixs_host: {...}}
      */
     var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
         fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
@@ -286,8 +287,10 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
         fatherSeq = treeRootSeq[root];  // root is ovs
         if (root === '0') {  // first level, father is flowvisor, sorted need
             treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
-            subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
-            fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
+            if (fsTop.links_fl.length > 0) {
+                subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
+                fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
+            }
         } 
         seq = fatherSeq;  // no more sort needed
         treeLayout.setOvsLine(fatherSeq, 0, seq);
@@ -311,7 +314,6 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
 
     treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
 
-    //obj.css("height",treeLayout.max_y + fsTop.nodes_pic.pic_height);
     return treeLayout;
 }
 
@@ -376,8 +378,9 @@ function draw (obj, PIC_PATH) {
         nodes = {},
         treeLayout = new axisTree(obj.offset(), obj.width(), fsTop.nodes_pic.pic_height),  // 初始化子画布。
         axis_nodes = plot(treeLayout, treeRootSeq, ovsTree, hostTree);
-    // calculate coordinate according to tree info
+        // calculate coordinate according to tree info
 
+    obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
     links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
     $.extend(nodes, axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
     var axis_links = drawLine(nodes, links);

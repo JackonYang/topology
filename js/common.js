@@ -33,7 +33,11 @@ var getConnected = function (father, link, visited) {  // father is the 2nd elem
             son.push(link[i][0]);
         }
     }
-    return unique(son);
+    if (son.length > 0) {
+        return unique(son);
+    } else {
+        return undefined;
+    }
 };
 
 /*
