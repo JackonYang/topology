@@ -316,22 +316,16 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
 }
 
 // 根据节点坐标计算线的坐标
-function drawLine(axis_ovs, axis_host, axis_flowvisor){  // unify in one array
+function drawLine(nodes, links) {
     "use strict";
     var coordinate = [],
-        links      = [],
-        nodes      = {},
         from,
         to,
-        nlinks;  // array to save link info
+        nlinks = links.length;
 
-    links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
-    $.extend(nodes, axis_ovs, axis_host, axis_flowvisor);
-
-    nlinks = links.length;
     for(var i = 0; i < nlinks; i += 1){  // lines between ovs and ovs
-        from = nodes[links[i][1]];
         to = nodes[links[i][0]];
+        from = nodes[links[i][1]];
         coordinate.push([from[0], from[1], to[0], to[1]]);
     }
     return coordinate;
@@ -375,14 +369,19 @@ var add_edges = function(edgeType, coordinates) {
 // 主流程
 function draw (origObj) {
 
-    var trees = bfs();
-    var hostTree = trees['host'];
-    var ovsTree = trees['ovs'];
-    var treeRootSeq = trees['treeSeq']
+    var trees = bfs(),
+        hostTree = trees['host'],
+        ovsTree = trees['ovs'],
+        treeRootSeq = trees['treeSeq'],
+        links = [],
+        nodes = {};
 
     // calculate coordinate according to tree info
     var axis_nodes = plot($(origObj), ovsTree, hostTree, treeRootSeq);
-    var axis_links = drawLine(axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
+
+    links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
+    $.extend(nodes, axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
+    var axis_links = drawLine(nodes, links)
 
     // generate html according to coordinate
     display(origObj, axis_nodes, axis_links);
