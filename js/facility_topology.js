@@ -317,20 +317,24 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
 
 // 根据节点坐标计算线的坐标
 function drawLine(axis_ovs, axis_host, axis_flowvisor){  // unify in one array
-    var axis_links = [];
-    for(var i = 0; i < fsTop.links_ovs.length; i++){  // lines between ovs and ovs
-        var from=axis_ovs[fsTop.links_ovs[i][0]],to=axis_ovs[fsTop.links_ovs[i][1]];
-        axis_links.push([from[0],from[1],to[0],to[1]]);
+    "use strict";
+    var coordinate = [],
+        links      = [],
+        nodes      = {},
+        from,
+        to,
+        nlinks;  // array to save link info
+
+    links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
+    $.extend(nodes, axis_ovs, axis_host, axis_flowvisor);
+
+    nlinks = links.length;
+    for(var i = 0; i < nlinks; i += 1){  // lines between ovs and ovs
+        from = nodes[links[i][1]];
+        to = nodes[links[i][0]];
+        coordinate.push([from[0], from[1], to[0], to[1]]);
     }
-    for(var i in fsTop.links_host){  // lines between ovs and host
-        var to=axis_host[fsTop.links_host[i][0]],from=axis_ovs[fsTop.links_host[i][1]];
-        axis_links.push([from[0],from[1],to[0],to[1]]);
-    }
-    for(var i in fsTop.links_fl){  // lines between ovs and flowvisor
-        var to=axis_flowvisor[fsTop.links_fl[i][1]],from=axis_ovs[fsTop.links_fl[i][0]];
-        axis_links.push([from[0],from[1],to[0],to[1]]);
-    }
-    return axis_links;
+    return coordinate;
 }
 
 // generate html code according to coordinate of nodes and lines.
@@ -391,7 +395,7 @@ $(document).ready(function () {
         initCircleTemp();  // test data
     } else {
         /(\d+)/g.test(location.pathname);
-        init(RegExp.$1);  // get data from host
+        init(RegExp.$1);  // get data from server
     }
 
     // init host info
