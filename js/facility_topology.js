@@ -27,9 +27,9 @@ var fsTop = {
     nodes_pic: {  // width and height of picture
         pic_height: 120,
         pic_width: 120,
-    },
-    PIC_PATH: ''
+    }
 }
+
 
 // init data
 function initCircleTemp() {
@@ -58,17 +58,19 @@ function initCircleTemp() {
         ["HOST12", "00:14"], ["HOST13", "00:16"], ["HOSTM1", "00:01"],
         ["HOSTM2", "00:05"], ["HOSTM1", "00:03"], ["HOSTM1", "00:09"],
         ["HOSTM2", "00:11"], ["HOSTM2", "00:08"], ["HOSTM2", "00:13"]];
-    fsTop.PIC_PATH = '../img/';
 }
 
 function init(islandId) {
     "use strict";
-    var node = 0, degree = {};
-    var topology_url = 'http://' + window.location.host + "/facility_topology/"+islandId+"/";
+    var url = 'http://' + window.location.host + "/facility_topology/"+islandId+"/",
+        node = 0,
+        degree = {};
+
     $.ajaxSetup({
         async : false  // 必须同步，后来的计算依赖与数据
     });
-    $.get(topology_url, function success (responseTxt,statusTxt, xhr) {
+
+    $.get(url, function success (responseTxt,statusTxt, xhr) {
         if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
             responseTxt = strToJson(responseTxt);
             fsTop.nodes_flowvisor = responseTxt.flowvisor || [];
@@ -88,7 +90,6 @@ function init(islandId) {
         .error(function () {
             console.log('data error')
         });  // url error, 404, log for debug
-    fsTop.PIC_PATH = '/static/topology/img/';
 }
 
 // set root. return {rootName: [node set]}
@@ -254,6 +255,7 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
             max[root] = lenLvl > max[root]? lenLvl : max[root];
         }
     }
+    console.log(max)
     sum = 0;
     for (root = 0; root < nTree; root +=1){
         sum += max[root];
@@ -319,11 +321,10 @@ function plot(obj, ovsTree, hostTree, treeRootSeq){
 function drawLine(nodes, links) {
     "use strict";
     var coordinate = [],
-        from,
-        to,
-        nlinks = links.length;
+        nlinks = links.length,
+        from, to, i;
 
-    for(var i = 0; i < nlinks; i += 1){  // lines between ovs and ovs
+    for(i = 0; i < nlinks; i += 1){  // lines between ovs and ovs
         to = nodes[links[i][0]];
         from = nodes[links[i][1]];
         coordinate.push([from[0], from[1], to[0], to[1]]);
@@ -332,15 +333,15 @@ function drawLine(nodes, links) {
 }
 
 // generate html code according to coordinate of nodes and lines.
-var display = function(container, vertex, edge){
+var display = function(container, vertex, edge, PIC_PATH){
     "use strict";
-    $(container).append("<svg>"+add_vertexs(vertex)+add_edges('edge',edge)+"</svg>");
+    $(container).append("<svg>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
 }
 
 // coordinates = {nodeType: {nodeId:[x,y]}}
-var add_vertexs = function(coordinates){
+var add_vertexs = function(coordinates, PIC_PATH){
     "use strict";
-    // only fsTop.PIC_PATH, fsTop.nodes_pic.width/heght is used
+    // only PIC_PATH, fsTop.nodes_pic.width/heght is used
     var nodes = ['flowvisor', 'host', 'ovs'],
         coordinate, x, y, nodeId, nodeType, html;
     for (var i = 0; i < nodes.length; i += 1){
@@ -349,7 +350,7 @@ var add_vertexs = function(coordinates){
             coordinate = coordinates[nodeType][nodeId];
             x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5;
             y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5;
-            html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+fsTop.PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
+            html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
         }
     }
     return html;
@@ -367,7 +368,7 @@ var add_edges = function(edgeType, coordinates) {
 }
 
 // 主流程
-function draw (origObj) {
+function draw (origObj, PIC_PATH) {
 
     var trees = bfs(),
         hostTree = trees['host'],
@@ -384,17 +385,20 @@ function draw (origObj) {
     var axis_links = drawLine(nodes, links)
 
     // generate html according to coordinate
-    display(origObj, axis_nodes, axis_links);
+    display(origObj, axis_nodes, axis_links, PIC_PATH);
 }
 
 // 程序入口
 $(document).ready(function () {
+    var PIC_PATH;
     // request data
     if (location.protocol === 'file:') {
         initCircleTemp();  // test data
+        PIC_PATH = '../img/';
     } else {
         /(\d+)/g.test(location.pathname);
         init(RegExp.$1);  // get data from server
+        PIC_PATH = '/static/topology/img/';
     }
 
     // init host info
@@ -411,5 +415,5 @@ $(document).ready(function () {
     fsTop.links_ovs = doubleLinks(fsTop.links_ovs)
 
     // div info
-    draw("div#facility_content");
+    draw("div#facility_content", PIC_PATH);
 });
