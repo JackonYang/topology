@@ -12,12 +12,12 @@ var doubleLinks = function (link) {
 // remove repeated elements in an array
 var unique = function (orig) {
     "use strict";
-    var a = [], i = 0;
-    for (i in orig) {
-        if (a.indexOf(orig[i]) === -1) {
-            a.push(orig[i]);
+    var a = [];
+    orig.forEach(function(item, idx, array){
+        if (-1 === a.indexOf(item)){
+            a.push(item);
         }
-    }
+    });
     return a;
 };
 
