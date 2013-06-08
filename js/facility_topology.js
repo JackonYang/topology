@@ -82,7 +82,12 @@ function init(islandId) {
             console.log(xhr);
         }
     })
-        .error(function () {console.log('data error')})  // url error, 404
+        .success(function (rspText) {
+            console.log("response text: " + rspText)
+        })  // request data success, log for debug.
+        .error(function () {
+            console.log('data error')
+        });  // url error, 404, log for debug
     fsTop.PIC_PATH = '/static/topology/img/';
 }
 
