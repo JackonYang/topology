@@ -254,11 +254,10 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
 
     for (root = 0; root < nTree; root += 1){
         for (var j = 0; j < ovsTree[root].length + 1; j += 1){
-            lenLvl = (ovsTree[root][j]||[]).length + (hostTree[root][j]||[]).length;
+            lenLvl = (ovsTree[root][j+1]||[]).length + (hostTree[root][j]||[]).length;
             max[root] = lenLvl > max[root]? lenLvl : max[root];
         }
     }
-    console.log(max);
     sum = 0;
     for (root = 0; root < nTree; root +=1){
         sum += max[root];
