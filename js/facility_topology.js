@@ -332,10 +332,20 @@ function drawLine(nodes, links) {
     return coordinate;
 }
 
+var show = function(vertex, links, vertexBox){
+    "use strict";
+    /*
+     * @param vertexBox: [width, height]
+     * @param vertex: {vertexType:{vertexId: [x, y]}}
+     * @param links: [ [from, to], ...]
+     * return html: string
+     */
+}
+
 // generate html code according to coordinate of nodes and lines.
 var display = function(container, vertex, edge, PIC_PATH){
     "use strict";
-    container.append("<svg>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
+    container.append("<svg height=100% width=100%>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
 }
 
 // coordinates = {nodeType: {nodeId:[x,y]}}
@@ -391,16 +401,18 @@ function draw (obj, PIC_PATH) {
 
 // 程序入口
 $(document).ready(function () {
+    /*
+     * 获取数据，树结构，呈现树，其他事件监听（窗口大小改变）
+     */
     var PIC_PATH;
     // request data
-    if (location.protocol === 'file:') {
+    if (location.protocol === 'file:') {  // auto test in qnit, do nothing here.
         initCircleTemp();  // test data
         PIC_PATH = '../img/';
     } else {
         /(\d+)/g.test(location.pathname);
         init(RegExp.$1);  // get data from server
         PIC_PATH = '/static/topology/img/';
-    }
 
     // init host info
     degree = getDegrees(fsTop.links_host);
@@ -417,4 +429,5 @@ $(document).ready(function () {
 
     // div info
     draw($("div#facility_content"), PIC_PATH);
+    }
 });
