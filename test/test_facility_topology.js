@@ -26,62 +26,83 @@ test('show', function () {
     "use strict";
     // @param vertex: {vertexType:{vertexId: [x, y]}}
     var unit = 70,
-        data_vertex = {
-        // single type
-        'singleType-1node': { 
-            'flowvisor': {
-                'f001': [unit, unit],
-            }
-        },
-        'singleType-2node': {
-            'ovs': {
-                'v001': [unit, 2 * unit],
-                'v002': [2 * unit, 2 * unit]
-            }
-        },
-        'singleType-3node': {
-            'host': {
-                'h001': [unit, 3 * unit],
-                'h002': [2 * unit, 3 * unit],
-                'h003': [3 * unit, 3 * unit]
-            }
-        },
-        // multitype
-        'twoType-1nodeOfEach': {
-            'ovs': {
-                'v001': [unit, 2 * unit],
+        dataVertex = {
+            // single type
+            'singleType-1node': { 
+                'flowvisor': {
+                    'f001': [unit, unit],
+                }
             },
-            'flowvisor': {
-                'f001': [2 * unit, unit],
+            'singleType-2node': {
+                'ovs': {
+                    'v001': [unit, 2 * unit],
+                    'v002': [2 * unit, 2 * unit]
+                } },
+            'singleType-3node': {
+                'host': {
+                    'h001': [unit, 3 * unit],
+                    'h002': [2 * unit, 3 * unit],
+                    'h003': [3 * unit, 3 * unit]
+                }
+            },
+            // multitype
+            'multiType-1nodeOfEach': {
+                'ovs': {
+                    'v001': [unit, 2 * unit],
+                },
+                'flowvisor': {
+                    'f001': [unit, unit],
+                },
+                'host': {
+                    'h001': [unit, 3 * unit],
+                }
+            },
+            'multiType-2nodeOfEach': {
+                'host': {
+                    'h001': [unit, 3 * unit],
+                    'h002': [2 * unit, 3 * unit]
+                },
+                'ovs': {
+                    'v001': [unit, 2*unit],
+                    'v002': [2 * unit, 2*unit]
+                },
+                'flowvisor': {
+                    'f001': [unit, unit],
+                    'f002': [2 * unit, unit]
+                }
+            },
+            'multiType-anyNode': {
+                'host': {
+                    'h001': [unit, 3*unit]
+                },
+                'ovs': {
+                    'v001': [unit, 2 * unit],
+                    'v002': [2 * unit, 2 * unit]
+                },
+                'flowvisor': {
+                    'f001': [unit, unit],
+                    'f002': [2 * unit, unit],
+                    'f003': [3 * unit, unit],
+                }
             }
         },
-        'twoType-2nodeOfEach': {
-            'host': {
-                'h001': [unit, 3 * unit],
-                'h002': [2 * unit, 3 * unit]
-            },
-            'ovs': {
-                'v001': [unit, 2*unit],
-                'v002': [2 * unit, 2*unit]
-            }
+        dataEdge = {
+            // singe edge
+            'single': [['f001', 'v001']],
+            'multi': [['f001', 'v001'], ['f001', 'v001'], ['v001', 'h001']]
         },
-        'twoType-anyNode': {
-            'host': {
-                'h001': [unit, 3*unit]
-            },
-            'ovs': {
-                'v001': [unit, 2 * unit],
-                'v002': [2 * unit, 2 * unit]
-            }
-        }
-    },
+        vertexDesc,
+        edgeDesc,
         desc;
-    for (desc in data_vertex) {
-        if (data_vertex.hasOwnProperty(desc)) {
-            $('body').append('<div style="width:800pt;border:2px solid red;height:260pt;">' 
-                    + '<p>' + desc + '</p>' 
-                    + show(data_vertex[desc], {}, {'width': unit, 'height': unit}) 
-                    + '</div>');
+    for (vertexDesc in dataVertex) {
+        if (dataVertex.hasOwnProperty(vertexDesc)) {
+            for (edgeDesc in dataEdge) {
+                desc = ["nodes: ", vertexDesc, ' || edge: ', edgeDesc].join('');
+                $('body').append(['<div style="width:800pt;border:2px solid red;height:240pt;">',
+                        '<p>', desc, '</p>',
+                        show(dataVertex[vertexDesc], dataEdge[edgeDesc], {'width': unit, 'height': unit}),
+                        '</div>'].join(''));
+            }
         }
     }
 

@@ -332,28 +332,31 @@ function drawLine(nodes, links) {
     return coordinate;
 }
 
-var show = function(vertex, links, vertexBox){
+var show = function(vertex, edge, vertexBox){
     "use strict";
     /*
      * @param vertexBox: [width, height]
      * @param vertex: {vertexType:{vertexId: [x, y]}}
-     * @param links: [ [from, to], ...]
+     * @param links: [ [x1, x2, y1, y2], ...]
      * return html: string
      */
 
     var html = '',
         PIC_PATH = '../img/',
+        nodes = {},
         nodeType,
         nodeId,
         coordinate,
-        x, y;
+        x, y,
+        from, to;
     for (nodeType in vertex) {
+        $.extend(nodes, vertex[nodeType]);
         if (vertex.hasOwnProperty(nodeType)) {
             for (nodeId in vertex[nodeType]){
                 if (vertex[nodeType].hasOwnProperty(nodeId)) {
                     coordinate = vertex[nodeType][nodeId];
-                    x = coordinate[0] - vertexBox.width;
-                    y = coordinate[1] - vertexBox.height;
+                    x = coordinate[0] - vertexBox.width * 0.5;
+                    y = coordinate[1] - vertexBox.height * 0.5;
                     html += ["<a xlink:href='/host/overview/", nodeId, "' target='new'>",
                         "<image xlink:href='" , PIC_PATH , nodeType , ".png' ", "x='", x, "' y='", y, "'",
                         "width='", vertexBox.width, "'height='", vertexBox.height, "'>", "</a>"].join(''); 
@@ -361,6 +364,13 @@ var show = function(vertex, links, vertexBox){
             }
         }
     }
+    edge.forEach(function (item) {
+        from = nodes[item[0]];
+        to = nodes[item[1]];
+        if (from && to) {
+            html += "<line class='edge' x1='" + from[0] + "' y1='" + from[1] + "' x2='" + to[0] + "' y2='" + to[1] + "'></line>";
+        }
+    });
     return "<svg height=100% width=100%>" + html + "</svg>";
 }
 
@@ -368,24 +378,6 @@ var show = function(vertex, links, vertexBox){
 var display = function(container, vertex, edge, PIC_PATH){
     "use strict";
     container.append("<svg height=100% width=100%>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
-}
-
-// coordinates = {nodeType: {nodeId:[x,y]}}
-var add_vertexs = function(coordinates, PIC_PATH){
-    "use strict";
-    // only PIC_PATH, fsTop.nodes_pic.width/heght is used
-    var nodes = ['flowvisor', 'host', 'ovs'],
-        coordinate, x, y, nodeId, nodeType, html;
-    for (var i = 0; i < nodes.length; i += 1){
-        nodeType = nodes[i];
-        for (nodeId in coordinates[nodeType]){
-            coordinate = coordinates[nodeType][nodeId];
-            x = coordinate[0] - fsTop.nodes_pic.pic_width * 0.5;
-            y = coordinate[1] - fsTop.nodes_pic.pic_height * 0.5;
-            html += " <a xlink:href='/host/overview/"+nodeId+"' target='new'><image class=" + nodeType + " xlink:href='"+PIC_PATH+nodeType+".png' x='" + x + "' y='"+y+"' width='"+fsTop.nodes_pic.pic_width+"'height='" +fsTop.nodes_pic.pic_height+"'></a>"; 
-        }
-    }
-    return html;
 }
 
 // coordinates = {edgeId:[x1,y1,x2,y2]}
