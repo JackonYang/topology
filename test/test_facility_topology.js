@@ -25,59 +25,63 @@ test('father_son()', function () {
 test('show', function () {
     "use strict";
     // @param vertex: {vertexType:{vertexId: [x, y]}}
-    var data_vertex = {
+    var unit = 70,
+        data_vertex = {
         // single type
         'singleType-1node': { 
             'flowvisor': {
-                'f001': [100, 100],
+                'f001': [unit, unit],
             }
         },
         'singleType-2node': {
             'ovs': {
-                'v001': [100, 200],
-                'v002': [200, 200]
+                'v001': [unit, 2 * unit],
+                'v002': [2 * unit, 2 * unit]
             }
         },
         'singleType-3node': {
             'host': {
-                'h001': [100, 300],
-                'h002': [200, 300],
-                'h003': [300, 300]
+                'h001': [unit, 3 * unit],
+                'h002': [2 * unit, 3 * unit],
+                'h003': [3 * unit, 3 * unit]
             }
         },
         // multitype
         'twoType-1nodeOfEach': {
             'ovs': {
-                'v001': [100, 200],
+                'v001': [unit, 2 * unit],
             },
             'flowvisor': {
-                'f001': [100, 100],
+                'f001': [2 * unit, unit],
             }
         },
         'twoType-2nodeOfEach': {
             'host': {
-                'h001': [100, 300],
-                'h002': [200, 300]
+                'h001': [unit, 3 * unit],
+                'h002': [2 * unit, 3 * unit]
             },
             'ovs': {
-                'v001': [100, 200],
-                'v002': [200, 200]
+                'v001': [unit, 2*unit],
+                'v002': [2 * unit, 2*unit]
             }
         },
         'twoType-anyNode': {
             'host': {
-                'h001': [100, 300]
+                'h001': [unit, 3*unit]
             },
             'ovs': {
-                'v001': [100, 200],
-                'v002': [200, 200]
+                'v001': [unit, 2 * unit],
+                'v002': [2 * unit, 2 * unit]
             }
         }
     },
         desc;
     for (desc in data_vertex) {
         if (data_vertex.hasOwnProperty(desc)) {
-            $('body').append('<div class="HTMLgenerater">' + show(data_vertex[desc]) + '<p>' + desc + '</p>' + '</div>');
+            $('body').append('<div style="width:800pt;border:2px solid red;height:260pt;">' 
+                    + '<p>' + desc + '</p>' 
+                    + show(data_vertex[desc], {}, {'width': unit, 'height': unit}) 
+                    + '</div>');
         }
     }
 

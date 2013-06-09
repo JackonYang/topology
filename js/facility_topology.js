@@ -340,6 +340,28 @@ var show = function(vertex, links, vertexBox){
      * @param links: [ [from, to], ...]
      * return html: string
      */
+
+    var html = '',
+        PIC_PATH = '../img/',
+        nodeType,
+        nodeId,
+        coordinate,
+        x, y;
+    for (nodeType in vertex) {
+        if (vertex.hasOwnProperty(nodeType)) {
+            for (nodeId in vertex[nodeType]){
+                if (vertex[nodeType].hasOwnProperty(nodeId)) {
+                    coordinate = vertex[nodeType][nodeId];
+                    x = coordinate[0] - vertexBox.width;
+                    y = coordinate[1] - vertexBox.height;
+                    html += ["<a xlink:href='/host/overview/", nodeId, "' target='new'>",
+                        "<image xlink:href='" , PIC_PATH , nodeType , ".png' ", "x='", x, "' y='", y, "'",
+                        "width='", vertexBox.width, "'height='", vertexBox.height, "'>", "</a>"].join(''); 
+                }
+            }
+        }
+    }
+    return "<svg height=100% width=100%>" + html + "</svg>";
 }
 
 // generate html code according to coordinate of nodes and lines.
