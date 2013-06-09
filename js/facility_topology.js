@@ -317,46 +317,53 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
 
-// generate html code according to coordinate of nodes
+// generate html source code according to link info of edges and coordinate of nodes.
 var show = function(vertex, edge, vertexBox, PIC_PATH){
     "use strict";
     /*
-     * @param vertexBox: [width, height]
      * @param vertex: {vertexType:{vertexId: [x, y]}}
-     * @param links: [ [x1, x2, y1, y2], ...]
+     * @param edge: [ [from, to], ...]
+     * @param vertexBox: [width, height]
+     * @param PIC_PATH: string. Ending with '/' is a must.
      * return html: string
      */
 
     var html = '',
-        nodes = {},
-        nodeType,
-        nodeId,
-        coordinate,
-        x, y,
-        from, to;
-    for (nodeType in vertex) {
-        if (vertex.hasOwnProperty(nodeType)) {
-            $.extend(nodes, vertex[nodeType]);
-            for (nodeId in vertex[nodeType]){
-                if (vertex[nodeType].hasOwnProperty(nodeId)) {
-                    coordinate = vertex[nodeType][nodeId];
-                    x = coordinate[0] - vertexBox.width * 0.5;
-                    y = coordinate[1] - vertexBox.height * 0.5;
-                    html += ["<a xlink:href='/host/overview/", nodeId, "' target='new'>",
-                        "<image xlink:href='" , PIC_PATH , nodeType , ".png' ", "x='", x, "' y='", y, "'",
-                        "width='", vertexBox.width, "'height='", vertexBox.height, "'>", "</a>"].join(''); 
+        nodes = {};
+    // nodes
+    (function () {
+        var nodeType,
+            nodeId,
+            coordinate,
+            x, y;
+        for (nodeType in vertex) {
+            if (vertex.hasOwnProperty(nodeType)) {
+                $.extend(nodes, vertex[nodeType]);
+                for (nodeId in vertex[nodeType]){
+                    if (vertex[nodeType].hasOwnProperty(nodeId)) {
+                        coordinate = vertex[nodeType][nodeId];
+                        x = coordinate[0] - vertexBox.width * 0.5;
+                        y = coordinate[1] - vertexBox.height * 0.5;
+                        html += ["<a xlink:href='/host/overview/", nodeId, "' target='new'>",
+                            "<image xlink:href='" , PIC_PATH , nodeType , ".png' ", "x='", x, "' y='", y, "'",
+                            "width='", vertexBox.width, "'height='", vertexBox.height, "'>", "</a>"].join(''); 
+                    }
                 }
             }
         }
-    }
+    })();
+    // edge
     edge.forEach(function (item) {
-        from = nodes[item[0]];
-        to = nodes[item[1]];
+        var from = nodes[item[0]],
+            to = nodes[item[1]];
         if (from && to) {
-            html += "<line class='edge' x1='" + from[0] + "' y1='" + from[1] + "' x2='" + to[0] + "' y2='" + to[1] + "'></line>";
+            html += [
+                "<line class='edge' x1='", from[0], "' y1='", from[1], "' x2='", to[0], "' y2='", to[1], "'></line>"
+            ].join('');
         }
     });
-    return "<svg height=100% width=100%>" + html + "</svg>";
+
+    return ["<svg height=100% width=100%>", html, "</svg>"].join('');
 }
 
 // 主流程
