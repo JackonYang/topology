@@ -22,9 +22,65 @@ test('father_son()', function () {
         deepEqual(father_son(father, son, links), res, '确定交换机和下一层交换机、主机之间的父子关系');
 });
 
-test('bfs()', function () {
-    //bfs();
+test('show', function () {
+    "use strict";
+    // @param vertex: {vertexType:{vertexId: [x, y]}}
+    var data_vertex = {
+        // single type
+        'singleType-1node': { 
+            'flowvisor': {
+                'f001': [100, 100],
+            }
+        },
+        'singleType-2node': {
+            'ovs': {
+                'v001': [100, 200],
+                'v002': [200, 200]
+            }
+        },
+        'singleType-3node': {
+            'host': {
+                'h001': [100, 300],
+                'h002': [200, 300],
+                'h003': [300, 300]
+            }
+        },
+        // multitype
+        'twoType-1nodeOfEach': {
+            'ovs': {
+                'v001': [100, 200],
+            },
+            'flowvisor': {
+                'f001': [100, 100],
+            }
+        },
+        'twoType-2nodeOfEach': {
+            'host': {
+                'h001': [100, 300],
+                'h002': [200, 300]
+            },
+            'ovs': {
+                'v001': [100, 200],
+                'v002': [200, 200]
+            }
+        },
+        'twoType-anyNode': {
+            'host': {
+                'h001': [100, 300]
+            },
+            'ovs': {
+                'v001': [100, 200],
+                'v002': [200, 200]
+            }
+        }
+    },
+        desc;
+    for (desc in data_vertex) {
+        if (data_vertex.hasOwnProperty(desc)) {
+            $('body').append('<div class="HTMLgenerater">' + show(data_vertex[desc]) + '<p>' + desc + '</p>' + '</div>');
+        }
+    }
+
     ok(true);
+
 });
-
-
