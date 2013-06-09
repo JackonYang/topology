@@ -28,16 +28,17 @@ test('show', function () {
     var unit = 70,
         dataVertex = {
             // single type
-            'singleType-1node': { 
+            'singleType-1node': {
                 'flowvisor': {
-                    'f001': [unit, unit],
+                    'f001': [unit, unit]
                 }
             },
             'singleType-2node': {
                 'ovs': {
                     'v001': [unit, 2 * unit],
                     'v002': [2 * unit, 2 * unit]
-                } },
+                }
+            },
             'singleType-3node': {
                 'host': {
                     'h001': [unit, 3 * unit],
@@ -48,13 +49,13 @@ test('show', function () {
             // multitype
             'multiType-1nodeOfEach': {
                 'ovs': {
-                    'v001': [unit, 2 * unit],
+                    'v001': [unit, 2 * unit]
                 },
                 'flowvisor': {
-                    'f001': [unit, unit],
+                    'f001': [unit, unit]
                 },
                 'host': {
-                    'h001': [unit, 3 * unit],
+                    'h001': [unit, 3 * unit]
                 }
             },
             'multiType-2nodeOfEach': {
@@ -63,8 +64,8 @@ test('show', function () {
                     'h002': [2 * unit, 3 * unit]
                 },
                 'ovs': {
-                    'v001': [unit, 2*unit],
-                    'v002': [2 * unit, 2*unit]
+                    'v001': [unit, 2 * unit],
+                    'v002': [2 * unit, 2 * unit]
                 },
                 'flowvisor': {
                     'f001': [unit, unit],
@@ -73,7 +74,7 @@ test('show', function () {
             },
             'multiType-anyNode': {
                 'host': {
-                    'h001': [unit, 3*unit]
+                    'h001': [unit, 3 * unit]
                 },
                 'ovs': {
                     'v001': [unit, 2 * unit],
@@ -82,7 +83,7 @@ test('show', function () {
                 'flowvisor': {
                     'f001': [unit, unit],
                     'f002': [2 * unit, unit],
-                    'f003': [3 * unit, unit],
+                    'f003': [3 * unit, unit]
                 }
             }
         },

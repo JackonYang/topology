@@ -26,9 +26,9 @@ var fsTop = {
     links_host: [], // array of [from, to]
     nodes_pic: {  // width and height of picture
         pic_height: 120,
-        pic_width: 120,
+        pic_width: 120
     }
-}
+};
 
 // init data
 function initCircleTemp() {
@@ -61,7 +61,7 @@ function initCircleTemp() {
 
 function init(islandId) {
     "use strict";
-    var url = 'http://' + window.location.host + "/facility_topology/"+islandId+"/",
+    var url = 'http://' + window.location.host + "/facility_topology/" + islandId + "/",
         node = 0,
         degree = {};
 
@@ -69,8 +69,8 @@ function init(islandId) {
         async : false  // 必须同步，后来的计算依赖与数据
     });
 
-    $.get(url, function success (responseTxt,statusTxt, xhr) {
-        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304) {
+    $.get(url, function success (responseTxt, statusTxt, xhr) {
+        if ((xhr.status >= 200 && xhr.status < 300) || xhr.status === 304) {
             responseTxt = strToJson(responseTxt);
             fsTop.nodes_flowvisor = responseTxt.flowvisor || [];
             fsTop.nodes_ovs = responseTxt.ovs || [];
@@ -84,18 +84,12 @@ function init(islandId) {
         }
     })
         .success(function (rspText) {
-            console.log("response text: " + rspText)
+            console.log("response text: " + rspText);
         })  // request data success, log for debug.
         .error(function () {
-            console.log('data error')
+            console.log('data error');
         });  // url error, 404, log for debug
 }
-
-// set root. return {rootName: [node set]}
-var getRootIds = function (visited) {
-    "use strict";
-    return getConnected(fsTop.nodes_flowvisor, fsTop.links_fl, visited) || getRootId1(visited);
-};
 
 var getRootId1 = function (visited) {  // max degree
     "use strict";
@@ -105,8 +99,8 @@ var getRootId1 = function (visited) {  // max degree
         i,
         dg;
 
-    for (i in fsTop.nodes_ovs){
-        if (visited.indexOf(fsTop.nodes_ovs[i]) === -1){
+    for (i in fsTop.nodes_ovs) {
+        if (visited.indexOf(fsTop.nodes_ovs[i]) === -1) {
             dg = degrees[fsTop.nodes_ovs[i]] || 0;
             if (dg > maxDegree) {
                 maxDegree = dg;
@@ -114,7 +108,13 @@ var getRootId1 = function (visited) {  // max degree
             }
         }
     }
-    return maxId
+    return maxId;
+};
+
+// set root. return {rootName: [node set]}
+var getRootIds = function (visited) {
+    "use strict";
+    return getConnected(fsTop.nodes_flowvisor, fsTop.links_fl, visited) || getRootId1(visited);
 };
 
 // generate flowvisor/ovs/host tree with breadth first search
@@ -172,7 +172,6 @@ var bfs = function () {
     return {'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq};
 }
 
-// 管理节点的坐标信息
 function axisTree (base, maxWidth, delta_y) {
     "use strict";
     /*
@@ -315,6 +314,46 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
     treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
 
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
+}
+
+function plotOvsAndHost(treeLayout, treeRootSeq, ovsTree, hostTree){
+    "use strict";
+    var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
+        fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
+        subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
+
+    for (var root in treeRootSeq){// 做图顺序
+        treeLayout.setWidth(treeWidth[root]);
+
+        fatherSeq = treeRootSeq[root];  // root is ovs
+        if (root === '0') {  // first level, father is flowvisor, sorted need
+            treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
+            if (fsTop.links_fl.length > 0) {
+                subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
+                fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
+            }
+        } 
+        seq = fatherSeq;  // no more sort needed
+        treeLayout.setOvsLine(fatherSeq, 0, seq);
+
+        levels = ovsTree[root].length + 1;
+        for (var line = 1; line < levels; line += 1){
+            host_level = (hostTree[root] && hostTree[root][line-1]) || [];
+            ovs_level = (ovsTree[root] && ovsTree[root][line]) || [];
+            subOvs = father_son(fatherSeq, ovs_level, fsTop.links_ovs);
+            subHost = father_son(fatherSeq, host_level, fsTop.links_host);
+            seq = sort(subHost, subOvs, fatherSeq);
+
+            // 根据排序结果和所在层数，计算横纵坐标
+            treeLayout.setOvsLine(ovs_level, line, seq);
+            treeLayout.setHostLine(host_level, line, seq);
+            
+            fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
+        }
+        treeLayout.nextTree();
+    }
+
+    return {'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
 
 // generate html source code according to link info of edges and coordinate of nodes.
