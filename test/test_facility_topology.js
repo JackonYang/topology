@@ -100,7 +100,7 @@ test('show', function () {
                 desc = ["nodes: ", vertexDesc, ' || edge: ', edgeDesc].join('');
                 $('body').append(['<div style="width:800pt;border:2px solid red;height:240pt;">',
                         '<p>', desc, '</p>',
-                        show(dataVertex[vertexDesc], dataEdge[edgeDesc], {'width': unit, 'height': unit}),
+                        show(dataVertex[vertexDesc], dataEdge[edgeDesc], {'width': unit, 'height': unit}, '../img/'),
                         '</div>'].join(''));
             }
         }

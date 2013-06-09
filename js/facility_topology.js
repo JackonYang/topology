@@ -314,25 +314,11 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
 
     treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
 
-    return treeLayout;
+    return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
 
-// 根据节点坐标计算线的坐标
-function drawLine(nodes, links) {
-    "use strict";
-    var coordinate = [],
-        nlinks = links.length,
-        from, to, i;
-
-    for(i = 0; i < nlinks; i += 1){  // lines between ovs and ovs
-        to = nodes[links[i][0]];
-        from = nodes[links[i][1]];
-        coordinate.push([from[0], from[1], to[0], to[1]]);
-    }
-    return coordinate;
-}
-
-var show = function(vertex, edge, vertexBox){
+// generate html code according to coordinate of nodes
+var show = function(vertex, edge, vertexBox, PIC_PATH){
     "use strict";
     /*
      * @param vertexBox: [width, height]
@@ -342,7 +328,6 @@ var show = function(vertex, edge, vertexBox){
      */
 
     var html = '',
-        PIC_PATH = '../img/',
         nodes = {},
         nodeType,
         nodeId,
@@ -350,8 +335,8 @@ var show = function(vertex, edge, vertexBox){
         x, y,
         from, to;
     for (nodeType in vertex) {
-        $.extend(nodes, vertex[nodeType]);
         if (vertex.hasOwnProperty(nodeType)) {
+            $.extend(nodes, vertex[nodeType]);
             for (nodeId in vertex[nodeType]){
                 if (vertex[nodeType].hasOwnProperty(nodeId)) {
                     coordinate = vertex[nodeType][nodeId];
@@ -374,23 +359,6 @@ var show = function(vertex, edge, vertexBox){
     return "<svg height=100% width=100%>" + html + "</svg>";
 }
 
-// generate html code according to coordinate of nodes and lines.
-var display = function(container, vertex, edge, PIC_PATH){
-    "use strict";
-    container.append("<svg height=100% width=100%>"+add_vertexs(vertex, PIC_PATH)+add_edges('edge',edge)+"</svg>");
-}
-
-// coordinates = {edgeId:[x1,y1,x2,y2]}
-var add_edges = function(edgeType, coordinates) {
-    "use strict";
-    var coordinate, edgeId, html;
-    for (var edgeId in coordinates){
-        coordinate = coordinates[edgeId]
-        html += "<line class='"+edgeType+"' x1='"+coordinate[0]+"' y1='"+coordinate[1]+"' x2='"+coordinate[2]+"' y2='"+coordinate[3]+"'></line>";
-    }
-    return html;
-}
-
 // 主流程
 function draw (obj, PIC_PATH) {
 
@@ -399,18 +367,14 @@ function draw (obj, PIC_PATH) {
         ovsTree = trees['ovs'],
         treeRootSeq = trees['treeSeq'],
         links = [],
-        nodes = {},
         treeLayout = new axisTree(obj.offset(), obj.width(), fsTop.nodes_pic.pic_height),  // 初始化子画布。
         axis_nodes = plot(treeLayout, treeRootSeq, ovsTree, hostTree);
         // calculate coordinate according to tree info
 
     obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
-    links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
-    $.extend(nodes, axis_nodes['ovs'], axis_nodes['host'], axis_nodes['flowvisor']);
-    var axis_links = drawLine(nodes, links);
 
-    // generate html according to coordinate
-    display(obj, axis_nodes, axis_links, PIC_PATH);
+    links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
+    obj.append(show(axis_nodes, links, {'width': 120, 'height': 120}, PIC_PATH));
 }
 
 // 程序入口
