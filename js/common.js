@@ -9,43 +9,8 @@ var doubleLinks = function (link) {
     return links;
 };
 
-// remove repeated elements in an array
-var unique = function (orig) {
-    "use strict";
-    var a = [];
-    orig.forEach(function (item) {
-        if (-1 === a.indexOf(item)) {
-            a.push(item);
-        }
-    });
-    return a;
-};
-
-var minus = function (a, b) {
-    "use strict";
-    return unique(a).filter(function (item) {
-        return (a.indexOf(item) > -1) && (-1 === b.indexOf(item));
-    });
-};
-
 var strToJson = function (str) {
     return (new Function("return " + str))();
-};
-
-var getConnected = function (father, link, visited) {
-    "use strict";
-    // father is the 2nd element of link
-    var son = [];
-    link.forEach(function (item) {
-        if (father.indexOf(item[1]) > -1
-                && (-1 === visited.indexOf(item[0]))) {
-            son.push(item[0]);
-        }
-    });
-    if (0 === son.length) {
-        return undefined;
-    }
-    return unique(son);
 };
 
 /*
@@ -78,10 +43,11 @@ var father_son = function (upperLevel, lowerLevel, links) {
  * fatherSeq can not be empty for subOvs and subHost data structure needs it.
  */
 var sort = function(subHost, subOvs, fatherSeq) {
-
-    var seq = [], host = [], ovs = [], mid = 0;
-    for (var i = 0; i < fatherSeq.length; i++){
-        var father = fatherSeq[i];
+    var seq = [],
+        host,
+        ovs,
+        mid;
+    fatherSeq.forEach(function (father) {
         host = subHost[father] || [];
         ovs = subOvs[father] || [];
         if (host && ovs){
@@ -90,22 +56,6 @@ var sort = function(subHost, subOvs, fatherSeq) {
             seq = seq.concat(ovs)
             seq = seq.concat(host.slice(mid))
         }
-    }
+    });
     return unique(seq);
-}
-
-var getDegrees = function(edges) {
-    "use strict";
-    var degree = {}, node = 0;
-    for (var i in edges){
-        for (var j in edges[i]) {
-            node = edges[i][j];
-            if (!degree[node]) {
-                degree[node] = 1;
-            } else {
-                degree[node] = degree[node] + 1;
-            }
-        }
-    }
-    return degree;
 }

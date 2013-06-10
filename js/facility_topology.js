@@ -30,6 +30,51 @@ var fsTop = {
     }
 };
 
+var unique = function (orig) {
+    "use strict";
+    var a = [];
+    orig.forEach(function (item) {
+        if (-1 === a.indexOf(item)) {
+            a.push(item);
+        }
+    });
+    return a;
+};
+
+var minus = function (a, b) {
+    "use strict";
+    return unique(a).filter(function (item) {
+        return (a.indexOf(item) > -1) && (-1 === b.indexOf(item));
+    });
+};
+
+var getConnected = function (father, link, visited) {
+    "use strict";
+    // father is the 2nd element of link
+    var son = [];
+    link.forEach(function (item) {
+        if (father.indexOf(item[1]) > -1
+                && (-1 === visited.indexOf(item[0]))) {
+            son.push(item[0]);
+        }
+    });
+    if (0 === son.length) {
+        return undefined;
+    }
+    return unique(son);
+};
+
+var getDegrees = function(edges) {
+    "use strict";
+    var degree = {};
+    edges.forEach(function (edge) {
+        edge.forEach(function (node) {
+            degree[node] = (degree[node]||0) + 1;
+        });
+    });
+    return degree;
+}
+
 // init data
 function initCircleTemp() {
     "use strict";
@@ -316,8 +361,14 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
 
-function plotOvsAndHost(treeLayout, treeRootSeq, ovsTree, hostTree){
+function plotOvsAndHost(treeBox, root, ovsTree, hostTree, linkOvs, linkHost) {
     "use strict";
+    /*
+     * @param root: [vertex1, vertex2]
+     * @param ovsTree: [ [v3, v4], [v5, v6, v7], ...]
+     * @param hostTree: [ [v3, v4], [v5, v6, v7], ...]
+     * return html: string
+     */
     var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
         fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
         subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
