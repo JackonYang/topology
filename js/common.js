@@ -32,18 +32,20 @@ var strToJson = function (str) {
     return (new Function("return " + str))();
 };
 
-var getConnected = function (father, link, visited) {  // father is the 2nd element of link
+var getConnected = function (father, link, visited) {
     "use strict";
-    var son = [], i = 0;
-    for (i in link) {
-        if (father.indexOf(link[i][1]) > -1 && (visited.indexOf(link[i][0]) === -1)) {
-            son.push(link[i][0]);
+    // father is the 2nd element of link
+    var son = [];
+    link.forEach(function (item) {
+        if (father.indexOf(item[1]) > -1
+                && (-1 === visited.indexOf(item[0]))) {
+            son.push(item[0]);
         }
+    });
+    if (0 === son.length) {
+        return undefined;
     }
-    if (son.length > 0) {
-        return unique(son);
-    } 
-    return undefined;
+    return unique(son);
 };
 
 /*
