@@ -30,6 +30,17 @@ var fsTop = {
     }
 };
 
+var doubleLinks = function (link) {
+    "use strict";
+    return link.map(function (item) {
+        return [item[1], item[0]];
+    }).concat(link);
+};
+
+var strToJson = function (str) {
+    return (Function("return " + str))();
+};
+
 var unique = function (orig) {
     "use strict";
     var a = [];
@@ -64,15 +75,59 @@ var getConnected = function (father, link, visited) {
     return unique(son);
 };
 
-var getDegrees = function(edges) {
+var getDegrees = function (edges) {
     "use strict";
     var degree = {};
     edges.forEach(function (edge) {
         edge.forEach(function (node) {
-            degree[node] = (degree[node]||0) + 1;
+            degree[node] = (degree[node] || 0) + 1;
         });
     });
     return degree;
+};
+
+var father_son = function (upperLevel, lowerLevel, links) {
+    "use strict";
+    var res = {},
+        link2 = doubleLinks(links);
+    doubleLinks(links).forEach(function (link) {
+        var son = link[0],
+            father = link[1];
+        if ((upperLevel.indexOf(father) > -1) && (lowerLevel.indexOf(son) > -1)) {
+            if (!res[father]) {
+                res[father] = [son];
+            } else if (res[father].indexOf(son) === -1) {
+                res[father].push(son);
+            }
+        }
+    });
+    return res;
+};
+
+/*
+ * sort facility in the same layer to avoid cross lines.
+ * input: subOvs/subHost = {'father1':[son1, son2, ...], father2: [son1, son2, ...]}
+ *        fatherSeq = node sequence of last layer
+ * if there are both ovs and host under a ovs, put ovs in the middle surrounding with hosts
+ * fatherSeq can not be empty for subOvs and subHost data structure needs it.
+ */
+var sort = function (subHost, subOvs, fatherSeq) {
+    "use strict";
+    var seq = [],
+        host,
+        ovs,
+        mid;
+    fatherSeq.forEach(function (father) {
+        host = subHost[father] || [];
+        ovs = subOvs[father] || [];
+        if (host && ovs) {
+            mid = Math.ceil(host.length * 0.5);
+            seq = seq.concat(host.slice(0, mid));
+            seq = seq.concat(ovs);
+            seq = seq.concat(host.slice(mid));
+        }
+    });
+    return unique(seq);
 }
 
 // init data
@@ -361,7 +416,7 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
 
-function plotOvsAndHost(treeBox, root, ovsTree, hostTree, linkOvs, linkHost) {
+function plotOvsAndHost(treeLayout, root, ovsTree, hostTree, linkOvs, linkHost) {
     "use strict";
     /*
      * @param root: [vertex1, vertex2]
@@ -369,21 +424,10 @@ function plotOvsAndHost(treeBox, root, ovsTree, hostTree, linkOvs, linkHost) {
      * @param hostTree: [ [v3, v4], [v5, v6, v7], ...]
      * return html: string
      */
-    var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
-        fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
+    var fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
         subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
 
-    for (var root in treeRootSeq){// 做图顺序
-        treeLayout.setWidth(treeWidth[root]);
-
-        fatherSeq = treeRootSeq[root];  // root is ovs
-        if (root === '0') {  // first level, father is flowvisor, sorted need
-            treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
-            if (fsTop.links_fl.length > 0) {
-                subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
-                fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
-            }
-        } 
+        fatherSeq = root;
         seq = fatherSeq;  // no more sort needed
         treeLayout.setOvsLine(fatherSeq, 0, seq);
 
@@ -401,8 +445,6 @@ function plotOvsAndHost(treeBox, root, ovsTree, hostTree, linkOvs, linkHost) {
             
             fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
         }
-        treeLayout.nextTree();
-    }
 
     return {'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
