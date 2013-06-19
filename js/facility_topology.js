@@ -88,6 +88,9 @@ var getDegrees = function (edges) {
 
 var father_son = function (upperLevel, lowerLevel, links) {
     "use strict";
+    if (!upperLevel) {
+        return lowerLevel;
+    }
     var res = {},
         link2 = doubleLinks(links);
     doubleLinks(links).forEach(function (link) {
@@ -272,7 +275,7 @@ var bfs = function () {
     return {'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq};
 }
 
-function axisTree (base, maxWidth, delta_y) {
+function drawer (base, maxWidth, delta_y, treesWidth) {
     "use strict";
     /*
      * 参考点base(x, y), 最大max(x, y), 树宽，高度浮动.
@@ -281,7 +284,11 @@ function axisTree (base, maxWidth, delta_y) {
                  base.top + delta_y*0.5];
     this.maxWidth = maxWidth;
 
-    this.width = 0;
+    this.idx = 0;
+    this.treesWidth = treesWidth;
+    console.log(this.treesWidth);
+
+    this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
     this.delta_y = delta_y;
 
     this.max_x = this.base[0];
@@ -291,7 +298,7 @@ function axisTree (base, maxWidth, delta_y) {
     this['host'] = {};
     this['flowvisor'] = {};
 }
-axisTree.prototype={
+drawer.prototype={
     setOvsLine: function(seqNode, level, seq){
         "use strict";
         var x = 0,
@@ -330,13 +337,11 @@ axisTree.prototype={
         this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
-    setWidth: function (treeWidth) {
-        "use strict";
-        this.width = this.maxWidth * treeWidth - fsTop.nodes_pic.pic_width;
-    },
-
-    nextTree: function (){
+    nextTree: function (){  // set base/max info of next tree
+        this.idx += 1;
         this.base[0] = this.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
+        console.log(this.treesWidth[this.idx]);
+        this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
     }
 }
 
@@ -368,21 +373,19 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
 }
 
 // 根据树的结构计算各节点的坐标。
-function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
+function plot(obj, treeRootSeq, ovsTree, hostTree){
     "use strict";
     /*
      * 根据 treeRootSeq 中确定的顺序，遍历每一棵树并计算每一层各节点的坐标。
      * 计算每一层坐标时，根据父节点的位置确定层内的位置，从而避免交叠线。
-     * TODO: 做图顺序动态计算，且不一定为横排放置。参考内存分配算法.
-     * 输入：ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
+     * @param ovsTree = {root1: {0:[ovs1, ovs2, host1, ...], 1: [ovs3], ...}, root2: {}}
      */
     var treeWidth = getRelativeWidth(treeRootSeq, ovsTree, hostTree, fsTop.nodes_flowvisor.length),
+        treeLayout = new drawer(obj.offset(), obj.width(), fsTop.nodes_pic.pic_height, treeWidth),  // 初始化子画布。
         fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
         subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
 
     for (var root in treeRootSeq){// 做图顺序
-        treeLayout.setWidth(treeWidth[root]);
-
         fatherSeq = treeRootSeq[root];  // root is ovs
         if (root === '0') {  // first level, father is flowvisor, sorted need
             treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
@@ -394,7 +397,7 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
         seq = fatherSeq;  // no more sort needed
         treeLayout.setOvsLine(fatherSeq, 0, seq);
 
-        levels = ovsTree[root].length + 1;
+        levels = ovsTree[root].length + 2;
         for (var line = 1; line < levels; line += 1){
             host_level = (hostTree[root] && hostTree[root][line-1]) || [];
             ovs_level = (ovsTree[root] && ovsTree[root][line]) || [];
@@ -411,42 +414,10 @@ function plot(treeLayout, treeRootSeq, ovsTree, hostTree){
         treeLayout.nextTree();
     }
 
-    treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
+    //treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
+    obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
 
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
-}
-
-function plotOvsAndHost(treeLayout, root, ovsTree, hostTree, linkOvs, linkHost) {
-    "use strict";
-    /*
-     * @param root: [vertex1, vertex2]
-     * @param ovsTree: [ [v3, v4], [v5, v6, v7], ...]
-     * @param hostTree: [ [v3, v4], [v5, v6, v7], ...]
-     * return html: string
-     */
-    var fatherSeq = [], ovs_level = [], host_level = [], levels,  // 分层信息
-        subOvs = {}, subHost = {}, seq = 0;  // 层间父子关系与排序后的序列
-
-        fatherSeq = root;
-        seq = fatherSeq;  // no more sort needed
-        treeLayout.setOvsLine(fatherSeq, 0, seq);
-
-        levels = ovsTree[root].length + 1;
-        for (var line = 1; line < levels; line += 1){
-            host_level = (hostTree[root] && hostTree[root][line-1]) || [];
-            ovs_level = (ovsTree[root] && ovsTree[root][line]) || [];
-            subOvs = father_son(fatherSeq, ovs_level, fsTop.links_ovs);
-            subHost = father_son(fatherSeq, host_level, fsTop.links_host);
-            seq = sort(subHost, subOvs, fatherSeq);
-
-            // 根据排序结果和所在层数，计算横纵坐标
-            treeLayout.setOvsLine(ovs_level, line, seq);
-            treeLayout.setHostLine(host_level, line, seq);
-            
-            fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
-        }
-
-    return {'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
 }
 
 // generate html source code according to link info of edges and coordinate of nodes.
@@ -506,11 +477,7 @@ function draw (obj, PIC_PATH) {
         ovsTree = trees['ovs'],
         treeRootSeq = trees['treeSeq'],
         links = [],
-        treeLayout = new axisTree(obj.offset(), obj.width(), fsTop.nodes_pic.pic_height),  // 初始化子画布。
-        axis_nodes = plot(treeLayout, treeRootSeq, ovsTree, hostTree);
-        // calculate coordinate according to tree info
-
-    obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
+        axis_nodes = plot(obj, treeRootSeq, ovsTree, hostTree);
 
     links = links.concat(fsTop.links_ovs).concat(fsTop.links_host).concat(fsTop.links_fl);
     obj.append(show(axis_nodes, links, {'width': 120, 'height': 120}, PIC_PATH));
