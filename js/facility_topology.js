@@ -531,6 +531,7 @@ $(document).ready(function () {
         init(RegExp.$1);  // get data from server
         PIC_PATH = '/static/topology/img/';
 
+    }
     // init host info
     degree = getDegrees(fsTop.links_host);
     for (var i in fsTop.nodes_host_all){
@@ -546,5 +547,4 @@ $(document).ready(function () {
 
     // div info
     draw($("div#facility_content"), PIC_PATH);
-    }
 });
