@@ -109,7 +109,6 @@ var father_son = function (upperLevel, lowerLevel, links) {
  * input: subOvs/subHost = {'father1':[son1, son2, ...], father2: [son1, son2, ...]}
  *        fatherSeq = node sequence of last layer
  * if there are both ovs and host under a ovs, put ovs in the middle surrounding with hosts
- * fatherSeq can not be empty for subOvs and subHost data structure needs it.
  */
 var sort = function (subHost, subOvs, fatherSeq) {
     "use strict";
@@ -409,7 +408,11 @@ function plot(obj, treeRootSeq, ovsTree, hostTree){
         treeLayout.nextTree();
     }
 
-    //treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
+    if (fsTop.hosts_empty) {
+        treeLayout.width = treeLayout.maxWidth * treeLayout.treesWidth[treeLayout.treesWidth.length - 1] - fsTop.nodes_pic.pic_width;
+        treeLayout.base[0] -= fsTop.nodes_pic.pic_width;  // move pointer for next tree
+        treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
+    }
     obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
 
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
