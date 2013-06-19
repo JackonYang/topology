@@ -88,14 +88,11 @@ var getDegrees = function (edges) {
 
 var father_son = function (upperLevel, lowerLevel, links) {
     "use strict";
-    if (!upperLevel) {
-        return lowerLevel;
-    }
-    var res = {},
-        link2 = doubleLinks(links);
+    var res   = {};
+
     doubleLinks(links).forEach(function (link) {
-        var son = link[0],
-            father = link[1];
+        var father = link[1],
+            son    = link[0];
         if ((upperLevel.indexOf(father) > -1) && (lowerLevel.indexOf(son) > -1)) {
             if (!res[father]) {
                 res[father] = [son];
@@ -286,7 +283,6 @@ function drawer (base, maxWidth, delta_y, treesWidth) {
 
     this.idx = 0;
     this.treesWidth = treesWidth;
-    console.log(this.treesWidth);
 
     this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
     this.delta_y = delta_y;
@@ -340,7 +336,6 @@ drawer.prototype={
     nextTree: function (){  // set base/max info of next tree
         this.idx += 1;
         this.base[0] = this.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
-        console.log(this.treesWidth[this.idx]);
         this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
     }
 }
