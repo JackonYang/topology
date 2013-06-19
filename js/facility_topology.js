@@ -276,16 +276,15 @@ function drawer (base, maxWidth, delta_y, treesWidth) {
     /*
      * 参考点base(x, y), 最大max(x, y), 树宽，高度浮动.
      */
-    this.base = [base.left + fsTop.nodes_pic.pic_width*0.5,
-                 base.top + delta_y*0.5];
-    this.maxWidth = maxWidth;
 
-    this.idx = 0;
     this.treesWidth = treesWidth;
-
-    this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
+    this.maxWidth = maxWidth;
     this.delta_y = delta_y;
 
+    this.idx = 0;
+    this.base = [base.left + fsTop.nodes_pic.pic_width*0.5,
+                 base.top + delta_y*0.5];
+    this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
     this.max_x = this.base[0];
     this.max_y = 200;
 
