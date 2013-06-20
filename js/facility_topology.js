@@ -381,7 +381,6 @@ function plot(obj, treeRootSeq, ovsTree, hostTree){
             subHost = father_son(fatherSeq, host_level, fsTop.links_host);
             seq = sort(subHost, subOvs, fatherSeq);
 
-            // 根据排序结果和所在层数，计算横纵坐标
             treeLayout.setLine(ovs_level, line, seq);
             
             fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
