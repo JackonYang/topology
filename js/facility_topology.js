@@ -298,24 +298,18 @@ drawer.prototype={
 
         this.max_y = (this.max_y > ovs_y) ? this.max_y : ovs_y;
 
-        ovs.forEach(function (item){
-            that['ovs'][item]= [x(item), ovs_y];
-        });
-        minus(seq, ovs).forEach(function (item, i){
-            that['host'][item]= [x(item), host_y];
-        });
-    },
-
-    setFlowvisorLine: function(seqNode){
-        "use strict";
-        var x = 0, y = 0,
-            seq = seqNode;
-        for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
-            y = this.base[1];
-            this['flowvisor'][seqNode[i]]= [x, y];
+        if (level === -1) {
+            seq.forEach(function (item){
+                that['flowvisor'][item]= [x(item), ovs_y];
+            });
+        } else {
+            ovs.forEach(function (item){
+                that['ovs'][item]= [x(item), ovs_y];
+            });
+            minus(seq, ovs).forEach(function (item, i){
+                that['host'][item]= [x(item), host_y];
+            });
         }
-        this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
     nextTree: function (){  // set base/max info of next tree
@@ -370,7 +364,7 @@ function plot(obj, treeRootSeq, ovsTree, hostTree){
     for (var root in treeRootSeq){// 做图顺序
         fatherSeq = treeRootSeq[root];  // root is ovs
         if (root === '0') {  // first level, father is flowvisor, sorted need
-            treeLayout.setFlowvisorLine(fsTop.nodes_flowvisor);
+            treeLayout.setLine([], -1, fsTop.nodes_flowvisor);
             if (fsTop.links_fl.length > 0) {
                 subOvs = father_son(fsTop.nodes_flowvisor, fatherSeq, fsTop.links_fl)
                 fatherSeq = sort({}, subOvs, fsTop.nodes_flowvisor);
