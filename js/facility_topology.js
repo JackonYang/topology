@@ -285,27 +285,25 @@ function drawer (base, maxWidth, delta_y, treesWidth) {
     this['flowvisor'] = {};
 }
 drawer.prototype={
-    setOvsLine: function(seqNode, level, seq){
+    setLine: function(ovs, level, seq){
         "use strict";
         var x = 0,
-            y = 0;
-        for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base[0] + (seq.indexOf(seqNode[i]) + 1) * this.width/(seq.length+1);
-            y = this.base[1] + (level+1) * this.delta_y;
-            this['ovs'][seqNode[i]]= [x, y];
-        }
-        this.max_y = (this.max_y > y) ? this.max_y : y;
-    },
+            host = minus(seq, ovs),
+            that = this,
+            ovs_y = this.base[1] + (level+1) * this.delta_y,
+            host_y = this.base[1] + (level + 0.6) * this.delta_y;
 
-    setHostLine: function(seqNode, level, seq){
-        "use strict";
-        var x = 0, y = 0;
-        for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base[0] + (seq.indexOf(seqNode[i]) + 1) * this.width/(seq.length+1);
-            y = this.base[1] + (level + 0.6) * this.delta_y;
-            this['host'][seqNode[i]]=[x, y];
-        }
-        this.max_y = (this.max_y > y) ? this.max_y : y;
+        ovs.forEach(function (item, i){
+            x = that.base[0] + (seq.indexOf(item) + 1) * that.width/(seq.length+1);
+            that['ovs'][item]= [x, ovs_y];
+        });
+
+        host.forEach(function (item, i){
+            x = that.base[0] + (seq.indexOf(item) + 1) * that.width/(seq.length+1);
+            that['host'][item]= [x, host_y];
+        });
+
+        this.max_y = (this.max_y > ovs_y) ? this.max_y : ovs_y;
     },
 
     setFlowvisorLine: function(seqNode){
@@ -379,7 +377,7 @@ function plot(obj, treeRootSeq, ovsTree, hostTree){
             }
         } 
         seq = fatherSeq;  // no more sort needed
-        treeLayout.setOvsLine(fatherSeq, 0, seq);
+        treeLayout.setLine(fatherSeq, 0, seq);
 
         levels = ovsTree[root].length + 2;
         for (var line = 1; line < levels; line += 1){
@@ -390,15 +388,14 @@ function plot(obj, treeRootSeq, ovsTree, hostTree){
             seq = sort(subHost, subOvs, fatherSeq);
 
             // 根据排序结果和所在层数，计算横纵坐标
-            treeLayout.setOvsLine(ovs_level, line, seq);
-            treeLayout.setHostLine(host_level, line, seq);
+            treeLayout.setLine(ovs_level, line, seq);
             
             fatherSeq = sort({}, subOvs, fatherSeq);  // father of next loop
         }
         treeLayout.nextTree();
     }
 
-    treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
+    treeLayout.setLine([], 1, fsTop.hosts_empty);  // empty host
     obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
 
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
