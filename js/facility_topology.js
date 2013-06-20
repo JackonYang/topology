@@ -258,14 +258,7 @@ var bfs = function () {
         roots = getRootIds(visited_ovs);  // next tree
     }
 
-    // 没有访问过的 host 是 empty host
-
-    // add empty host to the tree
-    roots = [];
-    rootSeq.push(roots);
-    rootIdx = rootSeq.indexOf(roots);
-    ovsTree[rootIdx] = [];
-    hostTree[rootIdx] = [minus(fsTop.nodes_host_all, visited_host)];
+    fsTop.hosts_empty = minus(fsTop.nodes_host_all, visited_host);
 
     console.log({'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq});
     return {'ovs': ovsTree, 'host': hostTree, 'treeSeq': rootSeq};
@@ -339,30 +332,29 @@ drawer.prototype={
 }
 
 function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
-    var nTree = roots.length,
-        max   = [],
-        nLvl  = [],
-        lenLvl, root, lvl;
+    "use strict";
+    var sum   = 0,
+        max = roots.map(function (item) {
+            return item.length;
+        });
 
-    for (root = 0; root < nTree; root += 1){  // init by length root
-        max[root] = roots[root].length;
-    }
     max[0] = n_fv > max[0]? n_fv : max[0];
-
-    for (root = 0; root < nTree; root += 1){
-        for (var j = 0; j < ovsTree[root].length + 1; j += 1){
-            lenLvl = (ovsTree[root][j+1]||[]).length + (hostTree[root][j]||[]).length;
-            max[root] = lenLvl > max[root]? lenLvl : max[root];
+    max.forEach(function (item, i){
+        var lenLvl,
+            j;
+        for (var j = 0; j < ovsTree[i].length + 1; j += 1){
+            lenLvl = (ovsTree[i][j+1]||[]).length + (hostTree[i][j]||[]).length;
+            max[i] = lenLvl > max[i]? lenLvl : max[i];
         }
-    }
-    sum = 0;
-    for (root = 0; root < nTree; root +=1){
-        sum += max[root];
-    }
-    for (root = 0; root < nTree; root +=1){
-        max[root] = max[root]/sum;
-    }
-    return max
+    });
+
+    max.push(fsTop.hosts_empty.length);
+    max.forEach(function (item){
+        sum += item;
+    });
+    return max.map(function (item){
+        return item/sum;
+    });
 }
 
 // 根据树的结构计算各节点的坐标。
@@ -407,11 +399,7 @@ function plot(obj, treeRootSeq, ovsTree, hostTree){
         treeLayout.nextTree();
     }
 
-    if (fsTop.hosts_empty) {
-        treeLayout.width = treeLayout.maxWidth * treeLayout.treesWidth[treeLayout.treesWidth.length - 1] - fsTop.nodes_pic.pic_width;
-        treeLayout.base[0] -= fsTop.nodes_pic.pic_width;  // move pointer for next tree
-        treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
-    }
+    treeLayout.setHostLine(fsTop.hosts_empty, 1, fsTop.hosts_empty);  // empty host
     obj.css("height", treeLayout.max_y + fsTop.nodes_pic.pic_height);
 
     return {'flowvisor': treeLayout['flowvisor'], 'ovs': treeLayout['ovs'], 'host': treeLayout['host']};
