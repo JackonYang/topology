@@ -287,23 +287,23 @@ function drawer (base, maxWidth, delta_y, treesWidth) {
 drawer.prototype={
     setLine: function(ovs, level, seq){
         "use strict";
-        var x = 0,
-            host = minus(seq, ovs),
-            that = this,
-            ovs_y = this.base[1] + (level+1) * this.delta_y,
-            host_y = this.base[1] + (level + 0.6) * this.delta_y;
-
-        ovs.forEach(function (item, i){
-            x = that.base[0] + (seq.indexOf(item) + 1) * that.width/(seq.length+1);
-            that['ovs'][item]= [x, ovs_y];
-        });
-
-        host.forEach(function (item, i){
-            x = that.base[0] + (seq.indexOf(item) + 1) * that.width/(seq.length+1);
-            that['host'][item]= [x, host_y];
-        });
+        var host_y = this.base[1] + (level + 0.6) * this.delta_y,
+            ovs_y  = this.base[1] + (level+1) * this.delta_y,
+            that   = this,
+            x      = function (item) {
+                return (function () {
+                    return that.base[0] + (seq.indexOf(item) + 1) * that.width/(seq.length+1);
+                })();
+            };
 
         this.max_y = (this.max_y > ovs_y) ? this.max_y : ovs_y;
+
+        ovs.forEach(function (item){
+            that['ovs'][item]= [x(item), ovs_y];
+        });
+        minus(seq, ovs).forEach(function (item, i){
+            that['host'][item]= [x(item), host_y];
+        });
     },
 
     setFlowvisorLine: function(seqNode){
