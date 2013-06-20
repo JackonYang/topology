@@ -321,6 +321,7 @@ drawer.prototype={
     },
 
     nextTree: function (){  // set base/max info of next tree
+        "use strict";
         this.idx += 1;
         this.base[0] += this.width;  // move pointer for next tree
         this.width = this.treesWidth[this.idx];
@@ -334,7 +335,9 @@ function getRelativeWidth(roots, ovsTree, hostTree, n_fv){
             return item.length;
         });
 
-    max[0] = n_fv > max[0]? n_fv : max[0];
+    if (n_fv > 0) {
+        max[0] = n_fv > max[0]? n_fv : max[0];
+    }
     max.forEach(function (item, i){
         var lenLvl,
             j;
