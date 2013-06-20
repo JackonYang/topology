@@ -273,7 +273,6 @@ function drawer (base, maxWidth, delta_y, treesWidth) {
     this.treesWidth = treesWidth.map(function (item){
         return maxWidth * item;
     });
-    this.maxWidth = maxWidth;
     this.delta_y = delta_y;
 
     this.idx = 0;
