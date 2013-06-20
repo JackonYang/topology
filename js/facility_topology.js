@@ -270,15 +270,15 @@ function drawer (base, maxWidth, delta_y, treesWidth) {
      * 参考点base(x, y), 最大max(x, y), 树宽，高度浮动.
      */
 
-    this.treesWidth = treesWidth;
+    this.treesWidth = treesWidth.map(function (item){
+        return maxWidth * item;
+    });
     this.maxWidth = maxWidth;
     this.delta_y = delta_y;
 
     this.idx = 0;
-    this.base = [base.left + fsTop.nodes_pic.pic_width*0.5,
-                 base.top + delta_y*0.5];
-    this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
-    this.max_x = this.base[0];
+    this.base = [base.left, base.top + delta_y*0.5];
+    this.width = this.treesWidth[this.idx];
     this.max_y = 200;
 
     this['ovs'] = {};
@@ -291,11 +291,10 @@ drawer.prototype={
         var x = 0,
             y = 0;
         for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
+            x = this.base[0] + (seq.indexOf(seqNode[i]) + 1) * this.width/(seq.length+1);
             y = this.base[1] + (level+1) * this.delta_y;
             this['ovs'][seqNode[i]]= [x, y];
         }
-        this.max_x = (this.max_x > x) ? this.max_x : x;
         this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
@@ -303,11 +302,10 @@ drawer.prototype={
         "use strict";
         var x = 0, y = 0;
         for(var i = 0, len = seqNode.length; i < len; i++){
-            x = this.base[0] + (seq.indexOf(seqNode[i])+1) * this.width/(seq.length+1);
+            x = this.base[0] + (seq.indexOf(seqNode[i]) + 1) * this.width/(seq.length+1);
             y = this.base[1] + (level + 0.6) * this.delta_y;
             this['host'][seqNode[i]]=[x, y];
         }
-        this.max_x = (this.max_x > x) ? this.max_x : x;
         this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
@@ -320,14 +318,13 @@ drawer.prototype={
             y = this.base[1];
             this['flowvisor'][seqNode[i]]= [x, y];
         }
-        this.max_x = (this.max_x > x) ? this.max_x : x;
         this.max_y = (this.max_y > y) ? this.max_y : y;
     },
 
     nextTree: function (){  // set base/max info of next tree
         this.idx += 1;
-        this.base[0] = this.max_x+fsTop.nodes_pic.pic_width;  // move pointer for next tree
-        this.width = this.maxWidth * this.treesWidth[this.idx] - fsTop.nodes_pic.pic_width;
+        this.base[0] += this.width;  // move pointer for next tree
+        this.width = this.treesWidth[this.idx];
     }
 }
 
